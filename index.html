@@ -9,7 +9,7 @@
   <!-- PWA Manifest -->
   <link rel="manifest" href="./manifest.webmanifest" />
 
-  <!-- Libraries (correct <script src=...> tags) -->
+  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -21,44 +21,48 @@
       --ring:#2a3a58; --chip:#1a2440; --btn:#1a2842; --btn-hover:#223152; --card:#0e1628;
     }
     *{box-sizing:border-box}
-    body{ margin:0; font-family: Inter, system-ui, Segoe UI, Roboto, Arial, sans-serif;
-      background:linear-gradient(180deg,#0a1120 0%, #0b1220 60%, #0d1322 100%); color:var(--text); }
-    header{ position:sticky; top:0; z-index:20; backdrop-filter: blur(8px);
-      background:rgba(9,13,24,0.6); border-bottom:1px solid var(--ring); }
+    body{
+      margin:0; font-family: Inter, system-ui, Segoe UI, Roboto, Arial, sans-serif;
+      background:linear-gradient(180deg,#0a1120 0%, #0b1220 60%, #0d1322 100%);
+      color:var(--text);
+    }
+    header{
+      position:sticky; top:0; z-index:20; backdrop-filter: blur(8px);
+      background:rgba(9,13,24,0.6); border-bottom:1px solid var(--ring);
+    }
     .wrap{max-width:1200px; margin:0 auto; padding:12px 16px;}
     h1{ margin:8px 0 6px; font-size:20px; letter-spacing:0.2px; font-weight:700; }
     .sub{color:var(--muted); font-size:13px}
     .headbar{ display:flex; gap:8px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
 
-    .grid{ display:grid; grid-template-columns:2fr 1.3fr; gap:12px; margin:12px 0; }
-    @media (max-width:1050px){ .grid{ grid-template-columns:1fr; } }
-    .card{ background:linear-gradient(180deg, rgba(26,38,64,0.4) 0%, rgba(9,15,29,0.6) 100%);
-      border:1px solid var(--ring); border-radius:14px; padding:12px; box-shadow: 0 4px 25px rgba(0,0,0,0.4); }
+    .card{
+      background:linear-gradient(180deg, rgba(26,38,64,0.4) 0%, rgba(9,15,29,0.6) 100%);
+      border:1px solid var(--ring); border-radius:14px; padding:12px;
+      box-shadow: 0 4px 25px rgba(0,0,0,0.4);
+    }
     .card h2{ font-size:15px; margin:0 0 10px; letter-spacing:.3px; color:#d6e6ff; }
+
     .row{display:flex; gap:8px; flex-wrap:wrap}
     .row > * { flex:1 1 160px; min-width:160px; }
+
     label{ display:block; font-size:12px; color:var(--muted); margin:8px 0 4px;}
-    input, select, textarea{ width:100%; background:#0c1426; color:var(--text);
-      border:1px solid #1f2a45; border-radius:10px; padding:10px 12px; font-size:14px; outline:none; }
-    input:focus, select:focus, textarea:focus{ border-color:#35507f; box-shadow:0 0 0 3px rgba(75,163,255,0.12);}
+    input, select, textarea{
+      width:100%; background:#0c1426; color:var(--text);
+      border:1px solid #1f2a45; border-radius:10px; padding:10px 12px; font-size:14px; outline:none;
+    }
+    input:focus, select:focus, textarea:focus{
+      border-color:#35507f; box-shadow:0 0 0 3px rgba(75,163,255,0.12);
+    }
     textarea{ min-height:72px; resize:vertical }
 
-    .btn{ background:var(--btn); border:1px solid #2a3b67; color:var(--text);
-      padding:9px 12px; border-radius:10px; font-size:14px; cursor:pointer; }
-    .btn:hover{ background:var(--btn-hover) } .btn.warn{ background:#453312; border-color:#997a2a}
-    .btn.ok{ background:#113c2d; border-color:#2f8f73} .btn.danger{ background:#3a1216; border-color:#8e2b37}
-
-    .kpis{ display:grid; grid-template-columns: repeat(4,1fr); gap:8px;}
-    @media (max-width:768px){ .kpis{ grid-template-columns: repeat(2,1fr);} }
-    .kpi{ background:linear-gradient(180deg,#0b1326 0,#0a1325 100%); border:1px solid var(--ring);
-      border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:6px; }
-    .kpi .label{ font-size:12px; color:var(--muted);} .kpi .value{ font-size:18px; font-weight:700; letter-spacing:.2px;}
-    .kpi .trend{ font-size:12px; } .chips{ display:flex; gap:6px; flex-wrap:wrap; margin-top:6px}
-    .chip{ background:var(--chip); border:1px solid var(--ring); color:var(--text);
-      border-radius:999px; padding:6px 10px; font-size:12px; display:inline-flex; align-items:center; gap:6px }
-    .chip.ok{ border-color:#1e6b54; background:rgba(38,203,161,.08)}
-    .chip.warn{ border-color:#9c7a2a; background:rgba(255,204,102,.08)}
-    .chip.danger{ border-color:#9a2e3a; background:rgba(255,92,92,.08)}
+    .btn{
+      background:var(--btn); border:1px solid #2a3b67; color:var(--text);
+      padding:9px 12px; border-radius:10px; font-size:14px; cursor:pointer;
+    }
+    .btn:hover{ background:var(--btn-hover) }
+    .btn.warn{ background:#453312; border-color:#997a2a}
+    .btn.ok{ background:#113c2d; border-color:#2f8f73}
+    .btn.danger{ background:#3a1216; border-color:#8e2b37}
 
     .toolbar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
     .toolbar .spacer{ flex:1 }
@@ -67,10 +71,31 @@
     th, td{ border-bottom:1px solid #1b2742; padding:8px; text-align:left; } thead{ background:#0a1426; }
     tbody tr:hover{ background:#0d162a } .actions button{ margin-right:6px }
 
+    .kpis{ display:grid; grid-template-columns: repeat(4,1fr); gap:8px;}
+    @media (max-width:768px){ .kpis{ grid-template-columns: repeat(2,1fr);} }
+    .kpi{
+      background:linear-gradient(180deg,#0b1326 0,#0a1325 100%); border:1px solid var(--ring);
+      border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:6px;
+    }
+    .kpi .label{ font-size:12px; color:var(--muted);}
+    .kpi .value{ font-size:18px; font-weight:700; letter-spacing:.2px;}
+
+    .chips{ display:flex; gap:6px; flex-wrap:wrap; margin-top:6px}
+    .chip{
+      background:var(--chip); border:1px solid var(--ring); color:var(--text);
+      border-radius:999px; padding:6px 10px; font-size:12px; display:inline-flex; align-items:center; gap:6px
+    }
+    .chip.ok{ border-color:#1e6b54; background:rgba(38,203,161,.08) }
+    .chip.warn{ border-color:#9c7a2a; background:rgba(255,204,102,.08) }
+    .chip.danger{ border-color:#9a2e3a; background:rgba(255,92,92,.08) }
+
     /* Modals */
     .modal-backdrop{ position:fixed; inset:0; background:rgba(3,6,14,.6); display:none; align-items:center; justify-content:center; z-index:40; }
-    .modal-backdrop.show{ display:flex; } /* fix visibility */
-    .modal{ background:var(--card); border:1px solid var(--ring); border-radius:14px; padding:12px; width:min(860px, 96vw); max-height:88vh; overflow:auto; box-shadow:0 10px 40px rgba(0,0,0,.5);}
+    .modal-backdrop.show{ display:flex; }
+    .modal{
+      background:var(--card); border:1px solid var(--ring); border-radius:14px; padding:12px;
+      width:min(860px, 96vw); max-height:88vh; overflow:auto; box-shadow:0 10px 40px rgba(0,0,0,.5);
+    }
     .modal-header{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px }
     .modal-actions{ display:flex; gap:8px; justify-content:flex-end; padding-top:6px }
     .field-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:8px }
@@ -86,13 +111,9 @@
     .toast.show{ display:flex; }
 
     .small{ font-size:12px; color:var(--muted); }
-	
-    /* Full-width sections (Entries + Chart stacked vertically) */
-    .full-width {
-    width: 100%;
-    margin-top: 12px;
-    }
 
+    /* Full-width sections (Entries + Chart stacked vertically) */
+    .full-width { width: 100%; margin-top: 12px; }
   </style>
 </head>
 <body>
@@ -138,16 +159,14 @@
             <option value="off">Off</option>
           </select>
         </div>
-		
-<div>
-  <label>View</label>
-  <select id="viewMode" title="Choose which sections are visible">
-    <option value="both" selected>Both (Table + Chart)</option>
-    <option value="table">Table only</option>
-    <option value="chart">Chart only</option>
-  </select>
-</div>
-
+        <div>
+          <label>View</label>
+          <select id="viewMode" title="Choose which sections are visible">
+            <option value="both" selected>Both (Table + Chart)</option>
+            <option value="table">Table only</option>
+            <option value="chart">Chart only</option>
+          </select>
+        </div>
       </div>
       <button class="btn" id="btnRefresh">Refresh</button>
       <div class="spacer"></div>
@@ -174,39 +193,32 @@
     </div>
 
     <!-- Entries (FULL WIDTH, ABOVE CHART) -->
-<div class="card full-width" id="entriesCard">
-  <div class="section-title">
-    <h2>Entries</h2>
-    <div class="small">
-      Modify or delete entries. Exports respect date range and selected fields.
+    <div class="card full-width" id="entriesCard">
+      <div class="section-title">
+        <h2>Entries</h2>
+        <div class="small">Modify or delete entries. Exports respect date range and selected fields.</div>
+      </div>
+      <div style="overflow:auto;">
+        <table id="entriesTable">
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
     </div>
-  </div>
-  <div style="overflow:auto;">
-    <table id="entriesTable">
-      <thead id="tableHead"></thead>
-      <tbody id="tableBody"></tbody>
-    </table>
-  </div>
-</div>
-<!-- Metrics Chart (FULL WIDTH, BELOW ENTRIES) -->
-  <div class="card full-width" id="chartCard">
-  <div class="section-title">
-    <h2>Metrics Chart</h2>
-    <div class="actions">
-      <button id="btnCollapseChart" class="btn" title="Collapse or expand chart area">
-        Collapse
-      </button>
+
+    <!-- Metrics Chart (FULL WIDTH, BELOW ENTRIES) -->
+    <div class="card full-width" id="chartCard">
+      <div class="section-title">
+        <h2>Metrics Chart</h2>
+        <div class="actions">
+          <button id="btnCollapseChart" class="btn" title="Collapse or expand chart area">Collapse</button>
+        </div>
+      </div>
+      <!-- Panel we hide/show when collapsing -->
+      <div id="chartPanel" style="height:320px">
+        <canvas id="metricsChart"></canvas>
+      </div>
     </div>
-  </div>
-  <!-- Panel we hide/show when collapsing -->
-  <div id="chartPanel" style="height:320px">
-    <canvas id="metricsChart"></canvas>
-  </div>
-</div>
-
-
-	  
-
   </main>
 
   <!-- Update toast -->
@@ -215,9 +227,6 @@
     <button id="btnReloadNow" class="btn ok">Reload now</button>
     <button id="btnDismissToast" class="btn">Later</button>
   </div>
-
-
-	
 
   <!-- Add/Edit Entry Modal -->
   <div class="modal-backdrop" id="entryModal">
@@ -246,11 +255,11 @@
         <div><label>Steps</label><input type="number" id="f_steps"></div>
         <div>
           <label>Pain (0-10)</label>
-          <input type="range" id="f_pain" min="0" max="10" value="0"
-                 oninput="document.getElementById('painVal').textContent=this.value">
+          <input type="range" id="f_pain" min="0" max="10" value="0" oninput="document.getElementById('painVal').textContent=this.value">
           <div class="small">Level: <b id="painVal">0</b></div>
         </div>
-        <div><label>Emotions</label>
+        <div>
+          <label>Emotions</label>
           <select id="f_emotions">
             <option value="">—</option>
             <option>Happy</option><option>Calm</option><option>Neutral</option>
@@ -282,20 +291,57 @@
   <!-- Field Selection Modal -->
   <div class="modal-backdrop" id="fieldsModal">
     <div class="modal">
-      
-<div class="modal-header" style="gap:8px; align-items:center;">
-  <h2 style="flex:1">Select Fields</h2>
-  <div style="display:flex; gap:8px; align-items:center;">
-    <button class="btn ok" id="btnQuickAdd" title="Add a new entry">Add Entry</button>
-    <button class="btn danger" id="btnBulkDelete" title="Bulk remove entries">Remove Entries…</button>
-    <button class="btn" onclick="UI.closeFields()">Close</button>
+      <div class="modal-header" style="gap:8px; align-items:center;">
+        <h2 style="flex:1">Select Fields</h2>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button class="btn ok" id="btnQuickAdd" title="Add a new entry">Add Entry</button>
+          <button class="btn danger" id="btnBulkDelete" title="Bulk remove entries">Remove Entries…</button>
+          <button class="btn" onclick="UI.closeFields()">Close</button>
+        </div>
+      </div>
+      <div class="field-grid" id="fieldsGrid"></div>
+      <div class="modal-actions">
+        <button class="btn" id="btnSaveFields">Save Fields</button>
+      </div>
+    </div>
   </div>
-</div>
 
-<div class="field-grid" id="fieldsGrid"></div>
-<div class="modal-actions">
-  <button class="btn" id="btnSaveFields">Save Fields</button>
-</div>
+  <!-- Bulk Remove Entries Modal -->
+  <div class="modal-backdrop" id="bulkRemoveModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Remove Entries</h2>
+        <button class="btn" onclick="UI.closeBulkRemove()">Close</button>
+      </div>
+
+      <div class="card" style="margin-bottom:10px">
+        <div class="row">
+          <div>
+            <label>Delete Mode</label>
+            <select id="rm_mode">
+              <option value="range" selected>By Date Range</option>
+              <option value="all">Delete ALL Entries</option>
+            </select>
+          </div>
+          <div id="rm_range_wrap" style="display:flex; gap:8px; align-items:flex-end;">
+            <div>
+              <label>From (inclusive)</label>
+              <input type="date" id="rm_start">
+            </div>
+            <div>
+              <label>To (inclusive)</label>
+              <input type="date" id="rm_end">
+            </div>
+          </div>
+        </div>
+        <div class="small" style="margin-top:6px; color:#9fb2d6">
+          Tip: Use “Delete ALL Entries” with caution. This cannot be undone.
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn danger" id="btnConfirmBulkRemove">Remove</button>
+      </div>
     </div>
   </div>
 
@@ -303,7 +349,7 @@
   <div class="modal-backdrop" id="thModal">
     <div class="modal">
       <div class="modal-header">
-        <h2>Per‑Metric Thresholds & Bands</h2>
+        <h2>Per‑Metric Thresholds &amp; Bands</h2>
         <button class="btn" onclick="UI.closeThresholds()">Close</button>
       </div>
       <div id="thEditor"></div>
@@ -349,52 +395,12 @@
     </div>
   </div>
 
-<!-- Bulk Remove Entries Modal -->
-<div class="modal-backdrop" id="bulkRemoveModal">
-  <div class="modal">
-    <div class="modal-header">
-      <h2>Remove Entries</h2>
-      <button class="btn" onclick="UI.closeBulkRemove()">Close</button>
-    </div>
-
-    <div class="card" style="margin-bottom:10px">
-      <div class="row">
-        <div>
-          <label>Delete Mode</label>
-          <select id="rm_mode">
-            <option value="range" selected>By Date Range</option>
-            <option value="all">Delete ALL Entries</option>
-          </select>
-        </div>
-        <div id="rm_range_wrap" style="display:flex; gap:8px; align-items:flex-end;">
-          <div>
-            <label>From (inclusive)</label>
-            <input type="date" id="rm_start">
-          </div>
-          <div>
-            <label>To (inclusive)</label>
-            <input type="date" id="rm_end">
-          </div>
-        </div>
-      </div>
-      <div class="small" style="margin-top:6px; color:#9fb2d6">
-        Tip: Use “Delete ALL Entries” with caution. This cannot be undone.
-      </div>
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn danger" id="btnConfirmBulkRemove">Remove</button>
-    </div>
-  </div>
-</div>
-
-
   <script>
   'use strict';
 
   /*** Build metadata (auto-filled at runtime from version.json) ***/
   const BUILD = {
-    appVersion: '1.0.0', // default; overridden by version.json
+    appVersion: '1.0.0',
     buildNumber: 'dev',
     commit: '-',
     timestamp: '-'
@@ -411,22 +417,27 @@
   const buildNumberSpan = document.getElementById('buildNumber');
   const swVersionSpan = document.getElementById('swVersion');
 
-  // Load version.json (Actions generates on deploy)
-  fetch('./version.json', { cache: 'no-store' })
-    .then(r => r.ok ? r.json() : null)
-    .then(v => {
-      if (v) {
-        BUILD.appVersion = v.version || BUILD.appVersion;
-        BUILD.buildNumber = v.build || BUILD.buildNumber;
-        BUILD.commit = v.commit?.slice(0,7) || BUILD.commit;
-        BUILD.timestamp = v.timestamp || BUILD.timestamp;
-      }
-    })
-    .catch(()=>{})
-    .finally(()=>{
-      appVersionSpan.textContent = BUILD.appVersion;
-      buildNumberSpan.textContent = `${BUILD.buildNumber}`;
-    });
+  // Load version.json (optional; safe if missing)
+  if (location.protocol.startsWith('http')) {
+    fetch('./version.json', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null)
+      .then(v => {
+        if (v) {
+          BUILD.appVersion = v.version || BUILD.appVersion;
+          BUILD.buildNumber = v.build || BUILD.buildNumber;
+          BUILD.commit = v.commit?.slice(0,7) || BUILD.commit;
+          BUILD.timestamp = v.timestamp || BUILD.timestamp;
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        appVersionSpan.textContent = BUILD.appVersion;
+        buildNumberSpan.textContent = `${BUILD.buildNumber}`;
+      });
+  } else {
+    appVersionSpan.textContent = BUILD.appVersion;
+    buildNumberSpan.textContent = `${BUILD.buildNumber}`;
+  }
 
   // Register SW
   if ('serviceWorker' in navigator) {
@@ -435,8 +446,7 @@
         const reg = await navigator.serviceWorker.register('./sw.js');
         swReg = reg;
         // Ask SW for its cache/version label
-        const sendGetVersion = () =>
-          navigator.serviceWorker.controller?.postMessage({type:'GET_VERSION'});
+        const sendGetVersion = () => navigator.serviceWorker.controller?.postMessage({type:'GET_VERSION'});
         navigator.serviceWorker.addEventListener('message', (evt)=>{
           if (evt.data?.type === 'VERSION' && evt.data?.cache) swVersionSpan.textContent = evt.data.cache;
         });
@@ -470,43 +480,47 @@
   const btnDismissToast = document.getElementById('btnDismissToast');
   function showUpdateToast(reg){
     toast.classList.add('show');
-    btnReloadNow.onclick = () => { reg.waiting?.postMessage({type:'SKIP_WAITING'}); };
-    btnDismissToast.onclick = () => toast.classList.remove('show');
+    if (btnReloadNow) btnReloadNow.onclick = () => { reg.waiting?.postMessage({type:'SKIP_WAITING'}); };
+    if (btnDismissToast) btnDismissToast.onclick = () => toast.classList.remove('show');
   }
 
-  checkBtn.addEventListener('click', async () => {
-    try {
-      installHint.textContent = 'Checking…';
-      if (swReg?.update) await swReg.update();
-      if (swReg?.waiting) showUpdateToast(swReg);
-      else installHint.textContent = 'No updates found.';
-      setTimeout(()=> installHint.textContent = '', 2000);
-    } catch (e) {
-      console.warn('Update check failed', e);
-      installHint.textContent = 'Update check failed.';
-      setTimeout(()=> installHint.textContent = '', 2000);
-    }
-  });
+  if (checkBtn) {
+    checkBtn.addEventListener('click', async () => {
+      try {
+        installHint.textContent = 'Checking…';
+        if (swReg?.update) await swReg.update();
+        if (swReg?.waiting) showUpdateToast(swReg);
+        else installHint.textContent = 'No updates found.';
+        setTimeout(()=> installHint.textContent = '', 2000);
+      } catch (e) {
+        console.warn('Update check failed', e);
+        installHint.textContent = 'Update check failed.';
+        setTimeout(()=> installHint.textContent = '', 2000);
+      }
+    });
+  }
 
   // A2HS
   window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
+    e.preventDefault(); // we use our own Install button
     deferredPrompt = e;
-    installBtn.style.display = 'inline-block';
-    installHint.textContent = 'Click Install to add to your device.';
+    if (installBtn) installBtn.style.display = 'inline-block';
+    if (installHint) installHint.textContent = 'Click Install to add to your device.';
   });
-  installBtn.addEventListener('click', async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    installHint.textContent = (outcome === 'accepted') ? 'Installing…' : 'Install dismissed.';
-    deferredPrompt = null;
-    installBtn.style.display = 'none';
-    setTimeout(()=> installHint.textContent = '', 2000);
-  });
+  if (installBtn) {
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (installHint) installHint.textContent = (outcome === 'accepted') ? 'Installing…' : 'Install dismissed.';
+      deferredPrompt = null;
+      installBtn.style.display = 'none';
+      setTimeout(()=> installHint.textContent = '', 2000);
+    });
+  }
   window.addEventListener('appinstalled', () => {
-    installHint.textContent = 'Installed!';
-    installBtn.style.display = 'none';
+    if (installHint) installHint.textContent = 'Installed!';
+    if (installBtn) installBtn.style.display = 'none';
     setTimeout(()=> installHint.textContent = '', 2000);
   });
 
@@ -640,13 +654,11 @@
     fieldsVisible: new Set(DEFAULT_FIELDS_VISIBLE),
     thresholds: JSON.parse(JSON.stringify(DEFAULT_THRESHOLDS)),
     options: {...OPTIONS},
-    
     ui: {
-    chartEnabled: true,       // existing toggle
-    viewMode: 'both',         // 'both' | 'table' | 'chart'
-    collapsedChart: false     // true = hide chartPanel (header stays)
-  },
-
+      chartEnabled: true,      // existing toggle
+      viewMode: 'both',        // 'both' | 'table' | 'chart'
+      collapsedChart: false    // true = hide chart panel (header stays)
+    },
     editId: null,
     medsBuffer: [],
   };
@@ -662,25 +674,9 @@
   };
 
   /* ==================== UI ==================== */
-  <script>
-// … inside UI = { … }:
-openBulkRemove(){
-  // default mode = range; show the range controls unless user selects "all"
-  document.getElementById('rm_mode').value = 'range';
-  document.getElementById('rm_range_wrap').style.display = '';
-  document.getElementById('rm_start').value = '';
-  document.getElementById('rm_end').value = '';
-  document.getElementById('bulkRemoveModal').classList.add('show');
-},
-closeBulkRemove(){
-  document.getElementById('bulkRemoveModal').classList.remove('show');
-},
-</script>
-
-  
   const UI = {
     initChartMetricSelector(){
-      const sel=document.getElementById('chartMetrics'); sel.innerHTML='';
+      const sel=document.getElementById('chartMetrics'); if (!sel) return; sel.innerHTML='';
       METRICS.forEach(m=>{
         if(m.type==='number'||m.key==='pain'){
           const opt=document.createElement('option'); opt.value=m.key; opt.textContent=m.label;
@@ -690,7 +686,9 @@ closeBulkRemove(){
       });
     },
     buildTable(){
-      const head=document.getElementById('tableHead'); head.innerHTML='';
+      const head=document.getElementById('tableHead'); const body=document.getElementById('tableBody');
+      if(!head||!body) return;
+      head.innerHTML='';
       const tr=document.createElement('tr');
       const vis=['date','time',...METRICS.map(m=>m.key)].filter(k=>State.fieldsVisible.has(k));
       vis.forEach(k=>{
@@ -700,9 +698,9 @@ closeBulkRemove(){
       const thA=document.createElement('th'); thA.textContent='Actions'; tr.appendChild(thA);
       head.appendChild(tr);
 
-      const body=document.getElementById('tableBody'); body.innerHTML='';
-      const start=document.getElementById('filterStart').value;
-      const end  =document.getElementById('filterEnd').value;
+      body.innerHTML='';
+      const start=document.getElementById('filterStart')?.value;
+      const end  =document.getElementById('filterEnd')?.value;
       const rows=State.entries
         .filter(en=>U.dateInRange(en.date,start,end))
         .sort((a,b)=>((U.parseDateTime(b.date,b.time)?.getTime()||0)-(U.parseDateTime(a.date,a.time)?.getTime()||0)));
@@ -728,7 +726,7 @@ closeBulkRemove(){
     refreshKPIs(){
       const sorted=[...State.entries].sort((a,b)=>((U.parseDateTime(b.date,b.time)?.getTime()||0)-(U.parseDateTime(a.date,a.time)?.getTime()||0)));
       const latest=sorted[0], prev=sorted[1];
-      const set=(id,val)=>document.getElementById(id).textContent=val;
+      const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val; };
       if(latest){
         set('kpiGlucose',U.fmt(latest.glucose));
         set('kpiBP',(latest.sys!=null&&latest.dia!=null)?`${latest.sys}/${latest.dia}`:'—');
@@ -737,17 +735,17 @@ closeBulkRemove(){
         set('kpiSpO2',U.fmt(latest.spo2)); set('kpiHR',U.fmt(latest.hr));
       } else { set('kpiGlucose','—'); set('kpiBP','—'); set('kpiBMI','—'); set('kpiWHtR','—'); set('kpiSpO2','—'); set('kpiHR','—'); }
       const trend=(cur,pre)=> (cur!=null&&pre!=null) ? (cur>pre?'↑':'↓') : '';
-      document.getElementById('kpiGlucoseTrend').textContent = latest&&prev?trend(latest.glucose,prev.glucose):'';
-      document.getElementById('kpiBPTrend').textContent      = latest&&prev?trend((latest.sys||0)+(latest.dia||0),(prev.sys||0)+(prev.dia||0)):'';
-      document.getElementById('kpiBMITrend').textContent     = latest&&prev?trend(U.bmi(latest.weightLbs,latest.heightIn)||0,U.bmi(prev.weightLbs,prev.heightIn)||0):'';
-      document.getElementById('kpiVitalsTrend').textContent  = latest&&prev?trend(latest.hr,prev.hr):'';
+      const tg=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
+      tg('kpiGlucoseTrend', latest&&prev?trend(latest.glucose,prev.glucose):'');
+      tg('kpiBPTrend',      latest&&prev?trend((latest.sys||0)+(latest.dia||0),(prev.sys||0)+(prev.dia||0)):'');
+      tg('kpiBMITrend',     latest&&prev?trend(U.bmi(latest.weightLbs,latest.heightIn)||0,U.bmi(prev.weightLbs,prev.heightIn)||0):'');
+      tg('kpiVitalsTrend',  latest&&prev?trend(latest.hr,prev.hr):'');
       UI.refreshRiskChips(latest);
     },
     refreshRiskChips(latest){
-      const wrap=document.getElementById('riskChips'); wrap.innerHTML='';
+      const wrap=document.getElementById('riskChips'); if(!wrap){return;} wrap.innerHTML='';
       if(!latest){ wrap.innerHTML='<span class="small">No data yet.</span>'; return; }
-      const chip=(txt,level)=>{ const d=document.createElement('div'); d.className=`chip ${level}`;
-        const icon=level==='danger'?'⚠️':(level==='warn'?'🟨':'🟢'); d.textContent=`${icon} ${txt}`; wrap.appendChild(d); };
+      const chip=(txt,level)=>{ const d=document.createElement('div'); d.className=`chip ${level}`; const icon=level==='danger'?'⚠️':(level==='warn'?'🟨':'🟢'); d.textContent=`${icon} ${txt}`; wrap.appendChild(d); };
       const T=State.thresholds;
       const assess=(key,val,label)=>{
         if(val==null) return; const th=T[key]; if(!th) return;
@@ -770,16 +768,19 @@ closeBulkRemove(){
         if (UI.chart) { UI.chart.destroy(); UI.chart = null; }
         return;
       }
-      // No Chart.js → skip
       if(!window.Chart) return;
 
-      const metricKeys=Array.from(document.getElementById('chartMetrics').selectedOptions).map(o=>o.value);
+      const metricSel=document.getElementById('chartMetrics');
+      if (!metricSel) return;
+      const metricKeys=Array.from(metricSel.selectedOptions).map(o=>o.value);
       if (!metricKeys.length) { if (UI.chart) { UI.chart.destroy(); UI.chart = null; } return; }
 
       const canvas=document.getElementById('metricsChart');
-      const start=document.getElementById('filterStart').value;
-      const end  =document.getElementById('filterEnd').value;
-      const axisMode=document.getElementById('axisMode').value;
+      if (!canvas) return;
+
+      const start=document.getElementById('filterStart')?.value;
+      const end  =document.getElementById('filterEnd')?.value;
+      const axisMode=document.getElementById('axisMode')?.value || 'perMetric';
 
       const rows=State.entries
         .filter(e=>U.dateInRange(e.date,start,end))
@@ -809,7 +810,7 @@ closeBulkRemove(){
         return { label:(m?.label||k), data, borderColor:color, backgroundColor:color+'66', tension:.25, spanGaps:true, yAxisID };
       });
 
-      // Annotations (register exists?)
+      // Annotations
       const annotations={};
       const hasAnn = !!(window.Chart?.registry?.plugins?.get?.('annotation') || window['chartjs-plugin-annotation']);
       if (hasAnn) {
@@ -854,9 +855,11 @@ closeBulkRemove(){
 
     openEntry(id=null){
       State.editId = id;
-      document.getElementById('entryModal').classList.add('show');
-      document.getElementById('btnDeleteEntry').style.display = id ? '' : 'none';
-      document.getElementById('entryModalTitle').textContent = id ? 'Edit Entry' : 'Add Entry';
+      document.getElementById('entryModal')?.classList.add('show');
+      const delBtn=document.getElementById('btnDeleteEntry');
+      if (delBtn) delBtn.style.display = id ? '' : 'none';
+      const title=document.getElementById('entryModalTitle');
+      if (title) title.textContent = id ? 'Edit Entry' : 'Add Entry';
       State.medsBuffer = [];
 
       if(id){
@@ -882,11 +885,12 @@ closeBulkRemove(){
       }
       UI.renderMedsBuffer();
     },
-    closeEntry(){ document.getElementById('entryModal').classList.remove('show'); },
+    closeEntry(){ document.getElementById('entryModal')?.classList.remove('show'); },
 
     openFields(){
-      document.getElementById('fieldsModal').classList.add('show');
-      const grid=document.getElementById('fieldsGrid'); grid.innerHTML='';
+      document.getElementById('fieldsModal')?.classList.add('show');
+      const grid=document.getElementById('fieldsGrid'); if(!grid) return;
+      grid.innerHTML='';
       const all=['date','time',...METRICS.map(m=>m.key)];
       for(const k of all){
         const m=METRICS.find(x=>x.key===k);
@@ -899,11 +903,11 @@ closeBulkRemove(){
         wrap.appendChild(cb); wrap.appendChild(lb); grid.appendChild(wrap);
       }
     },
-    closeFields(){ document.getElementById('fieldsModal').classList.remove('show'); },
+    closeFields(){ document.getElementById('fieldsModal')?.classList.remove('show'); },
 
     openThresholds(){
-      document.getElementById('thModal').classList.add('show');
-      const host=document.getElementById('thEditor'); host.innerHTML='';
+      document.getElementById('thModal')?.classList.add('show');
+      const host=document.getElementById('thEditor'); if(!host) return; host.innerHTML='';
       function box(title, html){
         const d=document.createElement('div'); d.className='card'; d.style.marginBottom='10px';
         d.innerHTML=`<h2>${title}</h2>${html}`; host.appendChild(d);
@@ -922,18 +926,18 @@ closeBulkRemove(){
         `);
       });
     },
-    closeThresholds(){ document.getElementById('thModal').classList.remove('show'); },
+    closeThresholds(){ document.getElementById('thModal')?.classList.remove('show'); },
 
     openOptions(){
-      document.getElementById('optModal').classList.add('show');
+      document.getElementById('optModal')?.classList.add('show');
       document.getElementById('optAutosave').value=State.options.autosave;
       document.getElementById('optCsvSelected').value=State.options.csvSelectedOnly;
       document.getElementById('optPdfChart').value=State.options.pdfIncludeChart;
     },
-    closeOptions(){ document.getElementById('optModal').classList.remove('show'); },
+    closeOptions(){ document.getElementById('optModal')?.classList.remove('show'); },
 
     renderMedsBuffer(){
-      const host=document.getElementById('medList'); host.innerHTML='';
+      const host=document.getElementById('medList'); if(!host) return; host.innerHTML='';
       State.medsBuffer.forEach((m,idx)=>{
         const chip=document.createElement('div'); chip.className='chip';
         chip.textContent=`${m.name} ${m.dose}${m.units?(' '+m.units):''}`;
@@ -941,34 +945,87 @@ closeBulkRemove(){
         btn.onclick=()=>{ State.medsBuffer.splice(idx,1); UI.renderMedsBuffer(); };
         chip.appendChild(btn); host.appendChild(chip);
       });
+    },
+
+    // Bulk remove modal helpers
+    openBulkRemove(){
+      const wrap=document.getElementById('rm_range_wrap'); if (wrap) wrap.style.display = '';
+      const ms=document.getElementById('rm_mode'); if (ms) ms.value='range';
+      const s=document.getElementById('rm_start'); if (s) s.value='';
+      const e=document.getElementById('rm_end');   if (e) e.value='';
+      document.getElementById('bulkRemoveModal')?.classList.add('show');
+    },
+    closeBulkRemove(){
+      document.getElementById('bulkRemoveModal')?.classList.remove('show');
     }
   };
+
+  /* ==================== View mode + chart collapse helpers ==================== */
+  async function saveUI() {
+    await DB.putConfig('ui', State.ui);
+  }
+  function applyViewMode() {
+    const entriesCard = document.getElementById('entriesCard');
+    const chartCard   = document.getElementById('chartCard');
+
+    const vm   = State.ui.viewMode || 'both';
+    const showChart = State.ui.chartEnabled === true;
+
+    const showEntriesByVM = (vm === 'both' || vm === 'table');
+    const showChartByVM   = (vm === 'both' || vm === 'chart');
+
+    if (entriesCard) entriesCard.style.display = showEntriesByVM ? '' : 'none';
+    if (chartCard)   chartCard.style.display   = (showChartByVM && showChart) ? '' : 'none';
+
+    // If "chart only" but chart disabled, auto-enable
+    if (vm === 'chart' && !showChart) {
+      State.ui.chartEnabled = true;
+      const toggle = document.getElementById('toggleChart');
+      if (toggle) toggle.value = 'on';
+      if (chartCard) chartCard.style.display = '';
+      saveUI();
+    }
+
+    if ((vm === 'both' || vm === 'chart') && State.ui.chartEnabled) {
+      setTimeout(() => UI.refreshChart?.(), 0);
+    }
+  }
+  function setChartCollapsed(collapsed) {
+    const panel = document.getElementById('chartPanel');
+    if (!panel) return;
+    panel.style.display = collapsed ? 'none' : '';
+  }
+  function updateCollapseButton() {
+    const btn = document.getElementById('btnCollapseChart');
+    if (!btn) return;
+    btn.textContent = State.ui.collapsedChart ? 'Expand' : 'Collapse';
+    btn.title = State.ui.collapsedChart ? 'Expand chart area' : 'Collapse chart area';
+  }
 
   /* ==================== Actions ==================== */
   const Actions = {
     async init(){
       await DB.open();
+
       const fields=await DB.getConfig('fieldsVisible'); if(fields) State.fieldsVisible=new Set(fields);
       const thresholds=await DB.getConfig('thresholds'); if(thresholds) State.thresholds=thresholds;
       const options=await DB.getConfig('options'); if(options) State.options=options;
-      const ui=await DB.getConfig('ui'); if(ui && typeof ui.chartEnabled==='boolean') State.ui.chartEnabled=ui.chartEnabled;
 
-      // Apply chart toggle in UI
-      document.getElementById('toggleChart').value = State.ui.chartEnabled ? 'on' : 'off';
-      document.getElementById('chartCard').style.display = State.ui.chartEnabled ? '' : 'none';
-	  
-	  // Load new UI prefs if present
-if (ui && typeof ui.viewMode === 'string') State.ui.viewMode = ui.viewMode;
-if (ui && typeof ui.collapsedChart === 'boolean') State.ui.collapsedChart = ui.collapsedChart;
+      const ui=await DB.getConfig('ui');
+      if (ui && typeof ui.chartEnabled==='boolean') State.ui.chartEnabled=ui.chartEnabled;
+      if (ui && typeof ui.viewMode==='string') State.ui.viewMode=ui.viewMode;
+      if (ui && typeof ui.collapsedChart==='boolean') State.ui.collapsedChart=ui.collapsedChart;
 
-// Initialize controls to saved values
-const viewSel = document.getElementById('viewMode');
-if (viewSel) viewSel.value = State.ui.viewMode || 'both';
+      // Apply UI in controls
+      const chartToggle = document.getElementById('toggleChart');
+      if (chartToggle) chartToggle.value = State.ui.chartEnabled ? 'on' : 'off';
+      const viewSel = document.getElementById('viewMode');
+      if (viewSel) viewSel.value = State.ui.viewMode || 'both';
 
-// Apply view + collapse states to the DOM
-applyViewMode();
-setChartCollapsed(State.ui.collapsedChart);
-updateCollapseButton();
+      // Set DOM visibility
+      applyViewMode();
+      setChartCollapsed(State.ui.collapsedChart);
+      updateCollapseButton();
 
       State.entries=await DB.getAllEntries();
       UI.initChartMetricSelector();
@@ -1056,7 +1113,7 @@ updateCollapseButton();
     }
   };
 
-  /* ==================== PDF Export (robust + shortened headers) ==================== */
+  /* ==================== PDF Export ==================== */
   Actions.exportPDF = async function exportPDF(){
     try{
       if(!window.jspdf){ alert('jsPDF failed to load.'); return; }
@@ -1099,10 +1156,8 @@ updateCollapseButton();
       // Include chart in PDF only if requested AND chart enabled and has data
       const wantChart = (State.options?.pdfIncludeChart==='yes') && State.ui.chartEnabled===true;
       if (wantChart && UI.chart && typeof UI.chart.toBase64Image==='function') {
-        // Ensure chart has any data point
         const hasAnyPoint = (UI.chart.data?.datasets||[]).some(ds => (ds.data||[]).some(v => v != null && v !== ''));
         if (hasAnyPoint) {
-          // Force update before capture to avoid blank image
           try { UI.chart.update('none'); } catch {}
           const url=UI.chart.toBase64Image('image/png', 1.0);
           if (url && /^data:image\/png;base64,/.test(url)) {
@@ -1157,7 +1212,7 @@ updateCollapseButton();
         cols.forEach(col=>{
           const lbl = labelOf(col);
           doc.text(shortLabel(lbl, colW), x+cellPadX, y+10);
-          x+=colW;
+        x+=colW;
         });
         doc.setDrawColor(160); doc.setLineWidth(0.5);
         doc.line(margin,y+headerH,margin+contentW,y+headerH);
@@ -1197,100 +1252,29 @@ updateCollapseButton();
   };
 
   /* ==================== Events ==================== */
-  
-  <script>
-// === New: “Select Fields” extra actions ===
-document.getElementById('btnQuickAdd').addEventListener('click', () => {
-  UI.openEntry(null); // reuse existing Add Entry flow
-});
+  document.getElementById('btnAdd')?.addEventListener('click', () => UI.openEntry(null));
+  document.getElementById('btnFields')?.addEventListener('click', () => UI.openFields());
+  document.getElementById('btnThresholds')?.addEventListener('click', () => UI.openThresholds());
+  document.getElementById('btnOptions')?.addEventListener('click', () => UI.openOptions());
+  document.getElementById('btnSaveFields')?.addEventListener('click', Actions.saveFields);
+  document.getElementById('btnSaveThresholds')?.addEventListener('click', Actions.saveThresholds);
+  document.getElementById('btnSaveOptions')?.addEventListener('click', Actions.saveOptions);
 
-document.getElementById('btnBulkDelete').addEventListener('click', () => {
-  UI.openBulkRemove();
-});
-
-// Mode toggle inside bulk remove modal
-document.getElementById('rm_mode').addEventListener('change', (e) => {
-  const wrap = document.getElementById('rm_range_wrap');
-  wrap.style.display = (e.target.value === 'range') ? '' : 'none';
-});
-
-// Confirm remove
-document.getElementById('btnConfirmBulkRemove').addEventListener('click', async () => {
-  const mode = document.getElementById('rm_mode').value;
-  const rmStart = document.getElementById('rm_start').value;
-  const rmEnd   = document.getElementById('rm_end').value;
-
-  let targets = [];
-
-  if (mode === 'all') {
-    // ALL entries
-    targets = [...State.entries];
-  } else {
-    // Range mode — inclusive of endpoints
-    const inRange = (dateStr) => {
-      if (!dateStr) return false;
-      const d = new Date(dateStr);
-      if (rmStart && d < new Date(rmStart)) return false;
-      if (rmEnd && d > new Date(rmEnd)) return false;
-      return true;
-    };
-    targets = State.entries.filter(e => inRange(e.date));
-  }
-
-  if (!targets.length) {
-    alert('No entries match the selected criteria.');
-    return;
-  }
-
-  const label = (mode === 'all')
-    ? 'ALL entries'
-    : `entries from ${rmStart || 'beginning'} to ${rmEnd || 'now'}`;
-
-  if (!confirm(`This will permanently delete ${targets.length} ${label}.\n\nAre you sure?`)) {
-    return;
-  }
-
-  try {
-    // Delete one by one via existing DB API
-    for (const en of targets) {
-      if (en && typeof en.id !== 'undefined') {
-        await DB.deleteEntry(en.id);
-      }
-    }
-    UI.closeBulkRemove();
-    // Re-load from DB and refresh UI
-    await Actions.refreshAll();
-    alert(`Deleted ${targets.length} ${label}.`);
-  } catch (err) {
-    console.error(err);
-    alert('Failed to remove entries. See console for details.');
-  }
-});
-</script>
-  
-  document.getElementById('btnAdd').addEventListener('click', ()=> UI.openEntry(null));
-  document.getElementById('btnFields').addEventListener('click', ()=> UI.openFields());
-  document.getElementById('btnThresholds').addEventListener('click', ()=> UI.openThresholds());
-  document.getElementById('btnOptions').addEventListener('click', ()=> UI.openOptions());
-  document.getElementById('btnSaveFields').addEventListener('click', Actions.saveFields);
-  document.getElementById('btnSaveThresholds').addEventListener('click', Actions.saveThresholds);
-  document.getElementById('btnSaveOptions').addEventListener('click', Actions.saveOptions);
-
-  document.getElementById('btnSaveEntry').addEventListener('click', async ()=>{
+  document.getElementById('btnSaveEntry')?.addEventListener('click', async ()=>{
     await Actions.saveEntryFromForm(); await Actions.refreshAll();
   });
-  document.getElementById('btnDeleteEntry').addEventListener('click', async ()=>{
+  document.getElementById('btnDeleteEntry')?.addEventListener('click', async ()=>{
     if(State.editId!=null && confirm('Delete this entry?')){
       await Actions.deleteEntry(State.editId); UI.closeEntry(); await Actions.refreshAll();
     }
   });
-  document.getElementById('btnRefresh').addEventListener('click', ()=>{
+  document.getElementById('btnRefresh')?.addEventListener('click', ()=>{
     UI.buildTable(); UI.refreshKPIs(); UI.refreshChart();
   });
-  document.getElementById('btnSaveCSV').addEventListener('click', Actions.exportCSV);
-  document.getElementById('btnSavePDF').addEventListener('click', Actions.exportPDF);
+  document.getElementById('btnSaveCSV')?.addEventListener('click', Actions.exportCSV);
+  document.getElementById('btnSavePDF')?.addEventListener('click', Actions.exportPDF);
 
-  document.getElementById('btnAddMed').addEventListener('click', ()=>{
+  document.getElementById('btnAddMed')?.addEventListener('click', ()=>{
     const name=document.getElementById('med_name').value.trim();
     const dose=document.getElementById('med_dose').value.trim();
     const units=document.getElementById('med_units').value.trim();
@@ -1303,126 +1287,138 @@ document.getElementById('btnConfirmBulkRemove').addEventListener('click', async 
   });
 
   // Filters & chart controls
-  document.getElementById('chartMetrics').addEventListener('change', ()=> UI.refreshChart());
-  document.getElementById('axisMode').addEventListener('change', ()=> UI.refreshChart());
-  document.getElementById('filterStart').addEventListener('change', ()=> { UI.buildTable(); UI.refreshChart(); });
-  document.getElementById('filterEnd').addEventListener('change',   ()=> { UI.buildTable(); UI.refreshChart(); });
+  document.getElementById('chartMetrics')?.addEventListener('change', () => UI.refreshChart());
+  document.getElementById('axisMode')?.addEventListener('change', () => UI.refreshChart());
+  document.getElementById('filterStart')?.addEventListener('change', () => { UI.buildTable(); UI.refreshChart(); });
+  document.getElementById('filterEnd')?.addEventListener('change',   () => { UI.buildTable(); UI.refreshChart(); });
 
-  // Chart toggle (persist)
-  document.getElementById('toggleChart').addEventListener('change', async (e)=>{
-  State.ui.chartEnabled = (e.target.value === 'on');
+  // Chart toggle (persist) — respects viewMode
+  document.getElementById('toggleChart')?.addEventListener('change', async (e)=>{
+    State.ui.chartEnabled = (e.target.value === 'on');
 
-  // If chart was turned off while in 'chart' view, fall back to 'table'
-  if (!State.ui.chartEnabled && State.ui.viewMode === 'chart') {
-    State.ui.viewMode = 'table';
-    const viewSel = document.getElementById('viewMode');
-    if (viewSel) viewSel.value = 'table';
-  }
-
-  // Apply visibility and cleanup
-  applyViewMode();
-
-  if (!State.ui.chartEnabled && UI.chart) {
-    UI.chart.destroy();
-    UI.chart = null;
-  }
-
-  await DB.putConfig('ui', State.ui);
-  UI.refreshChart();
-});
-``
-  
-  /* ==================== View mode + chart collapse ==================== */
-
-// Persist helper
-async function saveUI() {
-  await DB.putConfig('ui', State.ui);
-}
-
-// Show/hide entries & chart cards based on viewMode + chartEnabled
-function applyViewMode() {
-  const entriesCard = document.getElementById('entriesCard');
-  const chartCard   = document.getElementById('chartCard');
-
-  const vm   = State.ui.viewMode || 'both';
-  const showChart = State.ui.chartEnabled === true;
-
-  // Decide visibility
-  const showEntriesByVM = (vm === 'both' || vm === 'table');
-  const showChartByVM   = (vm === 'both' || vm === 'chart');
-
-  if (entriesCard) entriesCard.style.display = showEntriesByVM ? '' : 'none';
-  if (chartCard)   chartCard.style.display   = (showChartByVM && showChart) ? '' : 'none';
-
-  // If user asked "chart only" but chart was disabled, auto-enable it
-  if (vm === 'chart' && !showChart) {
-    State.ui.chartEnabled = true;
-    const toggle = document.getElementById('toggleChart');
-    if (toggle) toggle.value = 'on';
-    if (chartCard) chartCard.style.display = '';
-    saveUI();
-  }
-
-  // If chart panel is visible and chart is enabled, re-render to ensure sizing is correct
-  if ((vm === 'both' || vm === 'chart') && State.ui.chartEnabled) {
-    // defer refresh slightly to let layout settle
-    setTimeout(() => UI.refreshChart?.(), 0);
-  }
-}
-
-// Collapse / expand: hide the chart panel; header remains
-function setChartCollapsed(collapsed) {
-  const panel = document.getElementById('chartPanel');
-  if (!panel) return;
-  panel.style.display = collapsed ? 'none' : '';
-}
-
-function updateCollapseButton() {
-  const btn = document.getElementById('btnCollapseChart');
-  if (!btn) return;
-  btn.textContent = State.ui.collapsedChart ? 'Expand' : 'Collapse';
-  btn.title = State.ui.collapsedChart ? 'Expand chart area' : 'Collapse chart area';
-}
-
-// Wire: collapse button
-const btnCollapse = document.getElementById('btnCollapseChart');
-if (btnCollapse) {
-  btnCollapse.addEventListener('click', async () => {
-    State.ui.collapsedChart = !State.ui.collapsedChart;
-    setChartCollapsed(State.ui.collapsedChart);
-    updateCollapseButton();
-    await saveUI();
-    // When expanding, ensure chart resizes correctly
-    if (!State.ui.collapsedChart && State.ui.chartEnabled) {
-      setTimeout(() => UI.refreshChart?.(), 0);
-    }
-  });
-}
-
-// Wire: view mode select
-const viewSel = document.getElementById('viewMode');
-if (viewSel) {
-  viewSel.addEventListener('change', async (e) => {
-    const val = e.target.value || 'both';
-    State.ui.viewMode = (val === 'table' || val === 'chart') ? val : 'both';
-
-    // If user selects "chart", ensure chart is enabled
-    if (State.ui.viewMode === 'chart' && !State.ui.chartEnabled) {
-      State.ui.chartEnabled = true;
-      const toggle = document.getElementById('toggleChart');
-      if (toggle) toggle.value = 'on';
+    // If chart turned off while in 'chart' view, fall back to 'table'
+    if (!State.ui.chartEnabled && State.ui.viewMode === 'chart') {
+      State.ui.viewMode = 'table';
+      const viewSel = document.getElementById('viewMode');
+      if (viewSel) viewSel.value = 'table';
     }
 
     applyViewMode();
-    await saveUI();
+
+    if (!State.ui.chartEnabled && UI.chart) {
+      UI.chart.destroy(); UI.chart = null;
+    }
+    await DB.putConfig('ui', State.ui);
+    UI.refreshChart();
   });
-}
-``
+
+  // === “Select Fields” extra actions (guarded) ===
+  const elQuickAdd = document.getElementById('btnQuickAdd');
+  if (elQuickAdd) {
+    elQuickAdd.addEventListener('click', () => UI.openEntry(null));
+  }
+
+  const elBulkDelete = document.getElementById('btnBulkDelete');
+  if (elBulkDelete) {
+    elBulkDelete.addEventListener('click', () => UI.openBulkRemove());
+  }
+
+  const elRmMode = document.getElementById('rm_mode');
+  if (elRmMode) {
+    elRmMode.addEventListener('change', (e) => {
+      const wrap = document.getElementById('rm_range_wrap');
+      if (wrap) wrap.style.display = (e.target.value === 'range') ? '' : 'none';
+    });
+  }
+
+  const elConfirmRemove = document.getElementById('btnConfirmBulkRemove');
+  if (elConfirmRemove) {
+    elConfirmRemove.addEventListener('click', async () => {
+      const mode = (document.getElementById('rm_mode')?.value) || 'range';
+      const rmStart = document.getElementById('rm_start')?.value || '';
+      const rmEnd   = document.getElementById('rm_end')?.value || '';
+
+      let targets = [];
+
+      if (mode === 'all') {
+        targets = [...State.entries];
+      } else {
+        const inRange = (dateStr) => {
+          if (!dateStr) return false;
+          const d = new Date(dateStr);
+          if (rmStart && d < new Date(rmStart)) return false;
+          if (rmEnd && d > new Date(rmEnd)) return false;
+          return true;
+        };
+        targets = State.entries.filter(e => inRange(e.date));
+      }
+
+      if (!targets.length) {
+        alert('No entries match the selected criteria.');
+        return;
+      }
+
+      const label = (mode === 'all')
+        ? 'ALL entries'
+        : `entries from ${rmStart || 'beginning'} to ${rmEnd || 'now'}`;
+
+      if (!confirm(`This will permanently delete ${targets.length} ${label}.\n\nAre you sure?`)) {
+        return;
+      }
+
+      try {
+        for (const en of targets) {
+          if (en && typeof en.id !== 'undefined') {
+            await DB.deleteEntry(en.id);
+          }
+        }
+        UI.closeBulkRemove?.();
+        await Actions.refreshAll();
+        alert(`Deleted ${targets.length} ${label}.`);
+      } catch (err) {
+        console.error(err);
+        alert('Failed to remove entries. See console for details.');
+      }
+    });
+  }
+
+  // View mode select
+  const elViewMode = document.getElementById('viewMode');
+  if (elViewMode) {
+    elViewMode.addEventListener('change', async (e) => {
+      const val = e.target.value || 'both';
+      State.ui.viewMode = (val === 'table' || val === 'chart') ? val : 'both';
+
+      // If user selects "chart", ensure chart is enabled
+      if (State.ui.viewMode === 'chart' && !State.ui.chartEnabled) {
+        State.ui.chartEnabled = true;
+        const toggle = document.getElementById('toggleChart');
+        if (toggle) toggle.value = 'on';
+      }
+
+      applyViewMode();
+      await DB.putConfig('ui', State.ui);
+    });
+  }
+
+  // Collapse button
+  const elCollapseBtn = document.getElementById('btnCollapseChart');
+  if (elCollapseBtn) {
+    elCollapseBtn.addEventListener('click', async () => {
+      State.ui.collapsedChart = !State.ui.collapsedChart;
+      setChartCollapsed?.(State.ui.collapsedChart);
+      updateCollapseButton?.();
+      await DB.putConfig('ui', State.ui);
+      if (!State.ui.collapsedChart && State.ui.chartEnabled) {
+        setTimeout(() => UI.refreshChart?.(), 0);
+      }
+    });
+  }
 
   // Close modals by clicking backdrop
-  for(const id of ['entryModal','fieldsModal','thModal','optModal']){
-    document.getElementById(id).addEventListener('click',(ev)=>{
-      if(ev.target.classList.contains('modal-backdrop')) ev.target.classList.remove('show');
+  for(const id of ['entryModal','fieldsModal','thModal','optModal','bulkRemoveModal']){
+    document.getElementById(id)?.addEventListener('click',(ev)=>{
+      if(ev.target.classList?.contains('modal-backdrop')) ev.target.classList.remove('show');
     });
   }
 
