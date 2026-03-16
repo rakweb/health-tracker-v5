@@ -354,7 +354,7 @@
       </div>
       <div id="thEditor"></div>
       <div class="modal-actions">
-        <button class="btn ok" id="btnSaveThresholds">Save Thresholds</button>
+        <button class="btn ok" id="btnSaveThresholds" type="button">Save Thresholds</button>
       </div>
     </div>
   </div>
@@ -1259,6 +1259,117 @@
   document.getElementById('btnSaveFields')?.addEventListener('click', Actions.saveFields);
   document.getElementById('btnSaveThresholds')?.addEventListener('click', Actions.saveThresholds);
   document.getElementById('btnSaveOptions')?.addEventListener('click', Actions.saveOptions);
+  
+  
+  <script>
+// Reusable safe binder for Save Thresholds
+function bindSaveThresholds() {
+  const btn = document.getElementById('btnSaveThresholds');
+  if (btn && !btn._bound) {
+    btn.addEventListener('click', Actions.saveThresholds);
+    btn._bound = true; // mark as bound once
+  }
+}
+
+// Call once at startup
+bindSaveThresholds();
+</script>
+
+<script>
+Actions.saveThresholds = async function saveThresholds(){
+  try {
+    const existing = State.thresholds || {};
+    const merged = { ...existing };
+
+    // The metrics we render inputs for in the editor:
+    const editKeys = ['glucose','sys','dia','spo2','hr','tempF','stress','bodyBattery','lungFluidCc','resp','sleep','steps','pain','bmi','whtr'];
+
+    const getNum = (id) => {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      const s = (el.value ?? '').trim();
+      if (s === '') return null;           // treat blank as "no change"
+      const v = Number(s);
+      return Number.isFinite(v) ? v : null;
+    };
+
+    let changedCount = 0;
+
+    for (const k of editKeys) {
+      const wl = getNum(`t_${k}_warnLow`);
+      const bl = getNum(`t_${k}_bandLow`);
+      const bh = getNum(`t_${k}_bandHigh`);
+      const wh = getNum(`t_${k}_warnHigh`);
+
+      // If none provided, skip this metric (leave existing threshold as-is)
+      if (wl === null && bl === null && bh === null && wh === null) continue;
+
+      const cur = merged[k] || { warnLow:null, bandLow:null, bandHigh:null, warnHigh:null };
+      const next = {
+        warnLow:  wl !== null ? wl : cur.warnLow,
+        bandLow:  bl !== null ? bl : cur.bandLow,
+        bandHigh: bh !== null ? bh : cur.bandHigh,
+        warnHigh: wh !== null ? wh : cur.warnHigh
+      };
+
+      // Optional: sanity — ensure bandLow <= bandHigh if both provided
+      if (next.bandLow != null && next.bandHigh != null && next.bandLow > next.bandHigh) {
+        // swap to keep ordering sane
+        const tmp = next.bandLow; next.bandLow = next.bandHigh; next.bandHigh = tmp;
+      }
+
+      merged[k] = next;
+      changedCount++;
+    }
+
+    // Persist if anything changed
+    if (changedCount > 0) {
+      State.thresholds = merged;
+      await DB.putConfig('thresholds', merged);
+    }
+
+    UI.closeThresholds?.();
+    UI.refreshKPIs?.();
+    UI.refreshChart?.();
+
+    if (changedCount === 0) {
+      alert('No threshold values changed.');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Failed to save thresholds. See console for details.');
+  }
+};
+</script>
+
+  
+
+UI.openThresholds = function(){
+  document.getElementById('thModal')?.classList.add('show');
+  const host=document.getElementById('thEditor'); if(!host) return; host.innerHTML='';
+
+  function box(title, html){
+    const d=document.createElement('div'); d.className='card'; d.style.marginBottom='10px';
+    d.innerHTML=`<h2>${title}</h2>${html}`; host.appendChild(d);
+  }
+
+  const keys=['glucose','sys','dia','spo2','hr','tempF','stress','bodyBattery','lungFluidCc','resp','sleep','steps','pain','bmi','whtr'];
+  keys.forEach(k=>{
+    const th=State.thresholds[k]||{warnLow:'',bandLow:'',bandHigh:'',warnHigh:''};
+    const title=(METRICS.find(m=>m.key===k)?.label)||k.toUpperCase();
+    box(title,`
+      <div class="row">
+        <div><label>Warn Low</label><input type="number" id="t_${k}_warnLow" value="${th.warnLow}"></div>
+        <div><label>Band Low</label><input type="number" id="t_${k}_bandLow" value="${th.bandLow}"></div>
+        <div><label>Band High</label><input type="number" id="t_${k}_bandHigh" value="${th.bandHigh}"></div>
+        <div><label>Warn High</label><input type="number" id="t_${k}_warnHigh" value="${th.warnHigh}"></div>
+      </div>
+    `);
+  });
+
+  // ✅ Ensure the Save button is (re)bound even after the modal is rebuilt
+  bindSaveThresholds();
+}
 
   document.getElementById('btnSaveEntry')?.addEventListener('click', async ()=>{
     await Actions.saveEntryFromForm(); await Actions.refreshAll();
