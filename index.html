@@ -2,109 +2,1299 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Health Tracker (PWA Minimal)</title>
+  <title>Health Tracker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0b1220" />
 
-  <!-- ✅ Proper favicon data URI (note: wrapped in a <link> tag) -->
-  <link rel="icon" href="data:image/svg+xml;utf8,
-    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>
-      <rect width='64' height='64' rx='12' fill='%230b1220'/>
-      <path d='M10 42h12l6-18 9 27 6-15h8l4 8h10' fill='none' stroke='%234ba3ff'
-            stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/>
-    </svg>" />
-
-  <!-- ✅ Proper manifest link (NO literal “> ./manifest.webmanifest” text) -->
+  <!-- PWA Manifest -->
   <link rel="manifest" href="./manifest.webmanifest" />
 
+  <!-- Libraries (correct <script src=...> tags) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
   <style>
-    :root { --bg:#0b1220; --text:#e6eefc; --ring:#2b3a58; --muted:#9fb2d6; --btn:#1a2842; --btn-hover:#223152; }
-    * { box-sizing: border-box; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color:var(--text); background:linear-gradient(180deg,#0a1120 0,#0b1220 60%,#0d1322 100%); }
-    header { position:sticky; top:0; z-index:10; backdrop-filter:blur(8px); background:rgba(9,13,24,.6); border-bottom:1px solid var(--ring); }
-    .wrap { max-width:900px; margin:0 auto; padding:16px; }
-    h1 { margin:0 0 6px; font-size:22px; }
-    .sub { color:var(--muted); font-size:13px; }
-    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .spacer { flex:1; }
-    .btn { background:var(--btn); color:var(--text); border:1px solid #2a3b67; padding:9px 12px; border-radius:10px; cursor:pointer; }
-    .btn:hover{ background:var(--btn-hover); }
-    .card { margin:16px auto; max-width:900px; background:linear-gradient(180deg,rgba(26,38,64,.4) 0,rgba(9,15,29,.6) 100%);
-      border:1px solid var(--ring); border-radius:12px; padding:16px; }
-    .small { font-size:12px; color:var(--muted); }
-    code { background:#0e1a30; border:1px solid var(--ring); padding:2px 6px; border-radius:6px; }
+    :root{
+      --bg:#0b1220; --panel:#121a2a; --muted:#8aa0c3; --text:#e6eefc;
+      --accent:#4ba3ff; --danger:#ff5c5c; --warn:#ffcc66; --ok:#27d79b;
+      --ring:#2a3a58; --chip:#1a2440; --btn:#1a2842; --btn-hover:#223152; --card:#0e1628;
+    }
+    *{box-sizing:border-box}
+    body{ margin:0; font-family: Inter, system-ui, Segoe UI, Roboto, Arial, sans-serif;
+      background:linear-gradient(180deg,#0a1120 0%, #0b1220 60%, #0d1322 100%); color:var(--text); }
+    header{ position:sticky; top:0; z-index:20; backdrop-filter: blur(8px);
+      background:rgba(9,13,24,0.6); border-bottom:1px solid var(--ring); }
+    .wrap{max-width:1200px; margin:0 auto; padding:12px 16px;}
+    h1{ margin:8px 0 6px; font-size:20px; letter-spacing:0.2px; font-weight:700; }
+    .sub{color:var(--muted); font-size:13px}
+    .headbar{ display:flex; gap:8px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+
+    .grid{ display:grid; grid-template-columns:2fr 1.3fr; gap:12px; margin:12px 0; }
+    @media (max-width:1050px){ .grid{ grid-template-columns:1fr; } }
+    .card{ background:linear-gradient(180deg, rgba(26,38,64,0.4) 0%, rgba(9,15,29,0.6) 100%);
+      border:1px solid var(--ring); border-radius:14px; padding:12px; box-shadow: 0 4px 25px rgba(0,0,0,0.4); }
+    .card h2{ font-size:15px; margin:0 0 10px; letter-spacing:.3px; color:#d6e6ff; }
+    .row{display:flex; gap:8px; flex-wrap:wrap}
+    .row > * { flex:1 1 160px; min-width:160px; }
+    label{ display:block; font-size:12px; color:var(--muted); margin:8px 0 4px;}
+    input, select, textarea{ width:100%; background:#0c1426; color:var(--text);
+      border:1px solid #1f2a45; border-radius:10px; padding:10px 12px; font-size:14px; outline:none; }
+    input:focus, select:focus, textarea:focus{ border-color:#35507f; box-shadow:0 0 0 3px rgba(75,163,255,0.12);}
+    textarea{ min-height:72px; resize:vertical }
+
+    .btn{ background:var(--btn); border:1px solid #2a3b67; color:var(--text);
+      padding:9px 12px; border-radius:10px; font-size:14px; cursor:pointer; }
+    .btn:hover{ background:var(--btn-hover) } .btn.warn{ background:#453312; border-color:#997a2a}
+    .btn.ok{ background:#113c2d; border-color:#2f8f73} .btn.danger{ background:#3a1216; border-color:#8e2b37}
+
+    .kpis{ display:grid; grid-template-columns: repeat(4,1fr); gap:8px;}
+    @media (max-width:768px){ .kpis{ grid-template-columns: repeat(2,1fr);} }
+    .kpi{ background:linear-gradient(180deg,#0b1326 0,#0a1325 100%); border:1px solid var(--ring);
+      border-radius:12px; padding:10px; display:flex; flex-direction:column; gap:6px; }
+    .kpi .label{ font-size:12px; color:var(--muted);} .kpi .value{ font-size:18px; font-weight:700; letter-spacing:.2px;}
+    .kpi .trend{ font-size:12px; } .chips{ display:flex; gap:6px; flex-wrap:wrap; margin-top:6px}
+    .chip{ background:var(--chip); border:1px solid var(--ring); color:var(--text);
+      border-radius:999px; padding:6px 10px; font-size:12px; display:inline-flex; align-items:center; gap:6px }
+    .chip.ok{ border-color:#1e6b54; background:rgba(38,203,161,.08)}
+    .chip.warn{ border-color:#9c7a2a; background:rgba(255,204,102,.08)}
+    .chip.danger{ border-color:#9a2e3a; background:rgba(255,92,92,.08)}
+
+    .toolbar{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .toolbar .spacer{ flex:1 }
+    .section-title{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px}
+    table{ width:100%; border-collapse: collapse; font-size:13px; border:1px solid var(--ring); border-radius:10px; overflow:hidden; }
+    th, td{ border-bottom:1px solid #1b2742; padding:8px; text-align:left; } thead{ background:#0a1426; }
+    tbody tr:hover{ background:#0d162a } .actions button{ margin-right:6px }
+
+    /* Modals */
+    .modal-backdrop{ position:fixed; inset:0; background:rgba(3,6,14,.6); display:none; align-items:center; justify-content:center; z-index:40; }
+    .modal-backdrop.show{ display:flex; } /* fix visibility */
+    .modal{ background:var(--card); border:1px solid var(--ring); border-radius:14px; padding:12px; width:min(860px, 96vw); max-height:88vh; overflow:auto; box-shadow:0 10px 40px rgba(0,0,0,.5);}
+    .modal-header{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px }
+    .modal-actions{ display:flex; gap:8px; justify-content:flex-end; padding-top:6px }
+    .field-grid{ display:grid; grid-template-columns: repeat(3, 1fr); gap:8px }
+    @media (max-width:560px){ .field-grid{ grid-template-columns: repeat(2, 1fr);} }
+
+    /* Toast for updates */
+    .toast{
+      position:fixed; bottom:16px; left:50%; transform:translateX(-50%);
+      background:#0b1220; color:#e6eefc; border:1px solid #2a3a58; border-radius:12px;
+      padding:10px 12px; display:none; gap:8px; align-items:center; z-index:50;
+      box-shadow:0 8px 30px rgba(0,0,0,.5);
+    }
+    .toast.show{ display:flex; }
+
+    .small{ font-size:12px; color:var(--muted); }
+	
+    /* Full-width sections (Entries + Chart stacked vertically) */
+    .full-width {
+    width: 100%;
+    margin-top: 12px;
+    }
+
   </style>
 </head>
 <body>
-
-<canvas id="myChart" width="400" height="220"></canvas>
-  
   <header>
-    <div class="wrap row">
+    <div class="wrap headbar">
       <div>
-        <h1>Health Tracker (PWA Minimal)</h1>
-        <div class="sub">App <strong id="appVersion">—</strong> • Build <strong id="buildNumber">—</strong> • SW <strong id="swVersion">—</strong></div>
+        <h1>Health Tracker</h1>
+        <div class="sub">
+          <span>Installable PWA • </span>
+          <span>App <strong id="appVersion">—</strong> • Build <strong id="buildNumber">—</strong> • SW <strong id="swVersion">—</strong></span>
+        </div>
       </div>
-      <div class="spacer"></div>
-      <button id="btnInstall" class="btn" style="display:none">Install</button>
-      <button id="btnCheckUpdates" class="btn">Check for updates</button>
-      <span id="hint" class="small"></span>
+      <div class="install">
+        <button id="btnInstall" class="btn" style="display:none">Install</button>
+        <button id="btnCheckUpdates" class="btn">Check for updates</button>
+        <span id="installHint" class="small" style="color:#8aa0c3;"></span>
+      </div>
     </div>
   </header>
 
   <main class="wrap">
-    <div class="card">
-      <h2>Minimal PWA</h2>
-      <p>Installable + offline. Auto-versioning via <code>version.json</code> and SW cache name.</p>
-      <p class="small">Get this stable first. We can add Chart.js and jsPDF afterward with correct tags.</p>
+    <!-- Toolbar -->
+    <div class="toolbar card">
+      <div class="row" style="flex:1">
+        <div><label>Date</label><input type="date" id="filterStart"></div>
+        <div><label>To</label><input type="date" id="filterEnd"></div>
+        <div>
+          <label>Chart Metrics</label>
+          <select id="chartMetrics" multiple size="4"></select>
+          <div class="small">Hold Ctrl/Cmd for multi-select</div>
+        </div>
+        <div>
+          <label>Axis Mode</label>
+          <select id="axisMode">
+            <option value="single">Single Y-axis</option>
+            <option value="perMetric" selected>Per-metric axes</option>
+          </select>
+        </div>
+        <div>
+          <label>Show Metrics Chart</label>
+          <select id="toggleChart">
+            <option value="on" selected>On</option>
+            <option value="off">Off</option>
+          </select>
+        </div>
+		
+<div>
+  <label>View</label>
+  <select id="viewMode" title="Choose which sections are visible">
+    <option value="both" selected>Both (Table + Chart)</option>
+    <option value="table">Table only</option>
+    <option value="chart">Chart only</option>
+  </select>
+</div>
+
+      </div>
+      <button class="btn" id="btnRefresh">Refresh</button>
+      <div class="spacer"></div>
+      <button class="btn ok" id="btnAdd">Add Entry</button>
+      <button class="btn" id="btnFields">Select Fields</button>
+      <button class="btn" id="btnThresholds">Thresholds</button>
+      <button class="btn" id="btnSaveCSV">Save CSV</button>
+      <button class="btn" id="btnSavePDF">Save PDF</button>
+      <button class="btn warn" id="btnOptions">Options</button>
     </div>
+
+    <!-- KPIs -->
+    <div class="kpis">
+      <div class="kpi"><div class="label">Latest Glucose (mg/dL)</div><div class="value" id="kpiGlucose">—</div><div class="trend" id="kpiGlucoseTrend"></div></div>
+      <div class="kpi"><div class="label">BP (Sys/Dia)</div><div class="value" id="kpiBP">—</div><div class="trend" id="kpiBPTrend"></div></div>
+      <div class="kpi"><div class="label">BMI / WHtR</div><div class="value"><span id="kpiBMI">—</span> <span class="small">/</span> <span id="kpiWHtR">—</span></div><div class="trend" id="kpiBMITrend"></div></div>
+      <div class="kpi"><div class="label">SpO₂ / HR</div><div class="value"><span id="kpiSpO2">—</span> <span class="small">/</span> <span id="kpiHR">—</span></div><div class="trend" id="kpiVitalsTrend"></div></div>
+    </div>
+
+    <!-- Risk alerts -->
+    <div class="card">
+      <div class="section-title"><h2>Risk Alerts</h2></div>
+      <div class="chips" id="riskChips"></div>
+    </div>
+
+    <!-- Entries (FULL WIDTH, ABOVE CHART) -->
+<div class="card full-width" id="entriesCard">
+  <div class="section-title">
+    <h2>Entries</h2>
+    <div class="small">
+      Modify or delete entries. Exports respect date range and selected fields.
+    </div>
+  </div>
+  <div style="overflow:auto;">
+    <table id="entriesTable">
+      <thead id="tableHead"></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+<!-- Metrics Chart (FULL WIDTH, BELOW ENTRIES) -->
+  <div class="card full-width" id="chartCard">
+  <div class="section-title">
+    <h2>Metrics Chart</h2>
+    <div class="actions">
+      <button id="btnCollapseChart" class="btn" title="Collapse or expand chart area">
+        Collapse
+      </button>
+    </div>
+  </div>
+  <!-- Panel we hide/show when collapsing -->
+  <div id="chartPanel" style="height:320px">
+    <canvas id="metricsChart"></canvas>
+  </div>
+</div>
+
+
+	  
+
   </main>
 
-  <!-- ✅ Your script ONLY (no library URLs dumped as plain text) -->
+  <!-- Update toast -->
+  <div id="updateToast" class="toast">
+    <span>New version available.</span>
+    <button id="btnReloadNow" class="btn ok">Reload now</button>
+    <button id="btnDismissToast" class="btn">Later</button>
+  </div>
+
+
+	
+
+  <!-- Add/Edit Entry Modal -->
+  <div class="modal-backdrop" id="entryModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="entryModalTitle">Add Entry</h2>
+        <button class="btn" onclick="UI.closeEntry()">Close</button>
+      </div>
+      <div class="row">
+        <div><label>Date</label><input type="date" id="f_date"></div>
+        <div><label>Time</label><input type="time" id="f_time"></div>
+        <div><label>Glucose (mg/dL)</label><input type="number" id="f_glucose" inputmode="decimal"></div>
+        <div><label>Body Battery (0-100)</label><input type="number" id="f_bodyBattery" min="0" max="100"></div>
+        <div><label>Stress (0-100)</label><input type="number" id="f_stress" min="0" max="100"></div>
+        <div><label>Weight (lbs)</label><input type="number" id="f_weightLbs" inputmode="decimal"></div>
+        <div><label>Height (in)</label><input type="number" id="f_heightIn" inputmode="decimal"></div>
+        <div><label>Waist (in)</label><input type="number" id="f_waistIn" inputmode="decimal"></div>
+        <div><label>Temperature (°F)</label><input type="number" id="f_tempF" inputmode="decimal"></div>
+        <div><label>Lung Fluid (cc)</label><input type="number" id="f_lungFluidCc" inputmode="decimal"></div>
+        <div><label>Systolic (mmHg)</label><input type="number" id="f_sys" inputmode="numeric"></div>
+        <div><label>Diastolic (mmHg)</label><input type="number" id="f_dia" inputmode="numeric"></div>
+        <div><label>SpO₂ (%)</label><input type="number" id="f_spo2" min="0" max="100" inputmode="numeric"></div>
+        <div><label>Heart Rate (bpm)</label><input type="number" id="f_hr" inputmode="numeric"></div>
+        <div><label>Respiration (br/min)</label><input type="number" id="f_resp" inputmode="numeric"></div>
+        <div><label>Sleep (hrs)</label><input type="number" id="f_sleep" step="0.1"></div>
+        <div><label>Steps</label><input type="number" id="f_steps"></div>
+        <div>
+          <label>Pain (0-10)</label>
+          <input type="range" id="f_pain" min="0" max="10" value="0"
+                 oninput="document.getElementById('painVal').textContent=this.value">
+          <div class="small">Level: <b id="painVal">0</b></div>
+        </div>
+        <div><label>Emotions</label>
+          <select id="f_emotions">
+            <option value="">—</option>
+            <option>Happy</option><option>Calm</option><option>Neutral</option>
+            <option>Anxious</option><option>Sad</option><option>Stressed</option><option>Fatigued</option>
+          </select>
+        </div>
+        <div style="grid-column:1/-1">
+          <label>Medicines (name dose units; add multiple)</label>
+          <div class="row">
+            <input id="med_name" placeholder="Name (e.g., Furosemide)" />
+            <input id="med_dose" placeholder="Dose (e.g., 20)" />
+            <input id="med_units" placeholder="Units (mg, ml, tabs)" />
+            <button class="btn" id="btnAddMed" type="button">Add</button>
+          </div>
+          <div class="chips" id="medList"></div>
+        </div>
+        <div style="grid-column:1/-1">
+          <label>Comments</label>
+          <textarea id="f_comments" placeholder="Notes..."></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn danger" id="btnDeleteEntry" style="display:none">Delete</button>
+        <button class="btn" id="btnSaveEntry">Save Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Field Selection Modal -->
+  <div class="modal-backdrop" id="fieldsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Select Fields</h2>
+        <button class="btn" onclick="UI.closeFields()">Close</button>
+      </div>
+      <div class="field-grid" id="fieldsGrid"></div>
+      <div class="modal-actions">
+        <button class="btn" id="btnSaveFields">Save Fields</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Threshold Editor Modal -->
+  <div class="modal-backdrop" id="thModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Per‑Metric Thresholds & Bands</h2>
+        <button class="btn" onclick="UI.closeThresholds()">Close</button>
+      </div>
+      <div id="thEditor"></div>
+      <div class="modal-actions">
+        <button class="btn ok" id="btnSaveThresholds">Save Thresholds</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Options Modal -->
+  <div class="modal-backdrop" id="optModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Options</h2>
+        <button class="btn" onclick="UI.closeOptions()">Close</button>
+      </div>
+      <div class="row">
+        <div>
+          <label>Autosave (IndexedDB)</label>
+          <select id="optAutosave">
+            <option value="on">On</option>
+            <option value="off">Off</option>
+          </select>
+        </div>
+        <div>
+          <label>CSV Export → Use selected fields only</label>
+          <select id="optCsvSelected">
+            <option value="yes">Yes</option>
+            <option value="no">No (export all)</option>
+          </select>
+        </div>
+        <div>
+          <label>PDF Export → Include chart</label>
+          <select id="optPdfChart">
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" id="btnSaveOptions">Save Options</button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    const BUILD = { appVersion: 'dev', buildNumber: 'dev', commit: '-', timestamp: '-' };
-    const $ = (id) => document.getElementById(id);
+  'use strict';
 
-    fetch('./version.json', { cache: 'no-store' })
-      .then(r => r.ok ? r.json() : null)
-      .then(v => { if (v) Object.assign(BUILD, { appVersion: v.version, buildNumber: v.build, commit: v.commit?.slice(0,7), timestamp: v.timestamp }); })
-      .catch(()=>{})
-      .finally(()=>{ $('appVersion').textContent = BUILD.appVersion || 'dev'; $('buildNumber').textContent = BUILD.buildNumber || 'dev'; });
+  /*** Build metadata (auto-filled at runtime from version.json) ***/
+  const BUILD = {
+    appVersion: '1.0.0', // default; overridden by version.json
+    buildNumber: 'dev',
+    commit: '-',
+    timestamp: '-'
+  };
 
-    // Install (A2HS)
-    let deferredPrompt = null;
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault(); deferredPrompt = e;
-      $('btnInstall').style.display = 'inline-block'; $('hint').textContent = 'Click Install to add to your device.';
+  /* ==================== PWA: SW Register, Install, Updates, Version labels ==================== */
+  let deferredPrompt = null;
+  let swReg = null;
+
+  const installBtn = document.getElementById('btnInstall');
+  const checkBtn = document.getElementById('btnCheckUpdates');
+  const installHint = document.getElementById('installHint');
+  const appVersionSpan = document.getElementById('appVersion');
+  const buildNumberSpan = document.getElementById('buildNumber');
+  const swVersionSpan = document.getElementById('swVersion');
+
+  // Load version.json (Actions generates on deploy)
+  fetch('./version.json', { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(v => {
+      if (v) {
+        BUILD.appVersion = v.version || BUILD.appVersion;
+        BUILD.buildNumber = v.build || BUILD.buildNumber;
+        BUILD.commit = v.commit?.slice(0,7) || BUILD.commit;
+        BUILD.timestamp = v.timestamp || BUILD.timestamp;
+      }
+    })
+    .catch(()=>{})
+    .finally(()=>{
+      appVersionSpan.textContent = BUILD.appVersion;
+      buildNumberSpan.textContent = `${BUILD.buildNumber}`;
     });
-    $('btnInstall').addEventListener('click', async () => {
-      try { if (!deferredPrompt) return; deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice;
-        $('hint').textContent = outcome==='accepted'?'Installing…':'Install dismissed.';
-      } finally { deferredPrompt=null; $('btnInstall').style.display='none'; setTimeout(()=> $('hint').textContent='',1500); }
-    });
-    window.addEventListener('appinstalled', () => { $('btnInstall').style.display='none'; $('hint').textContent='Installed!'; setTimeout(()=> $('hint').textContent='',1500); });
 
-    // SW register + updates
-    let swReg = null;
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', async () => {
-        try {
-          const reg = await navigator.serviceWorker.register('./sw.js'); swReg = reg;
-          const ask = () => navigator.serviceWorker.controller?.postMessage({ type:'GET_VERSION' });
-          navigator.serviceWorker.addEventListener('message', (evt)=>{ if (evt?.data?.type==='VERSION' && evt.data.cache) $('swVersion').textContent = evt.data.cache; });
-          if (reg.active) ask(); else navigator.serviceWorker.ready.then(ask);
-          reg.addEventListener('updatefound', ()=>{ const sw = reg.installing; sw?.addEventListener('statechange', ()=>{ if (sw.state==='installed' && navigator.serviceWorker.controller) $('hint').textContent='New version available. Click “Check for updates”.'; }); });
-        } catch (e) { console.error('SW registration failed', e); }
-        navigator.serviceWorker.addEventListener('controllerchange', () => window.location.reload());
+  // Register SW
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', async () => {
+      try {
+        const reg = await navigator.serviceWorker.register('./sw.js');
+        swReg = reg;
+        // Ask SW for its cache/version label
+        const sendGetVersion = () =>
+          navigator.serviceWorker.controller?.postMessage({type:'GET_VERSION'});
+        navigator.serviceWorker.addEventListener('message', (evt)=>{
+          if (evt.data?.type === 'VERSION' && evt.data?.cache) swVersionSpan.textContent = evt.data.cache;
+        });
+        if (reg.active) sendGetVersion();
+        else navigator.serviceWorker.ready.then(()=> sendGetVersion());
+
+        // When an update is found
+        reg.addEventListener('updatefound', () => {
+          const newSW = reg.installing;
+          if (!newSW) return;
+          newSW.addEventListener('statechange', () => {
+            if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdateToast(reg);
+            }
+          });
+        });
+      } catch (e) {
+        console.error('SW registration failed', e);
+      }
+
+      // SW controller change → reload to use the new worker
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+      });
+    });
+  }
+
+  // Update toast
+  const toast = document.getElementById('updateToast');
+  const btnReloadNow = document.getElementById('btnReloadNow');
+  const btnDismissToast = document.getElementById('btnDismissToast');
+  function showUpdateToast(reg){
+    toast.classList.add('show');
+    btnReloadNow.onclick = () => { reg.waiting?.postMessage({type:'SKIP_WAITING'}); };
+    btnDismissToast.onclick = () => toast.classList.remove('show');
+  }
+
+  checkBtn.addEventListener('click', async () => {
+    try {
+      installHint.textContent = 'Checking…';
+      if (swReg?.update) await swReg.update();
+      if (swReg?.waiting) showUpdateToast(swReg);
+      else installHint.textContent = 'No updates found.';
+      setTimeout(()=> installHint.textContent = '', 2000);
+    } catch (e) {
+      console.warn('Update check failed', e);
+      installHint.textContent = 'Update check failed.';
+      setTimeout(()=> installHint.textContent = '', 2000);
+    }
+  });
+
+  // A2HS
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'inline-block';
+    installHint.textContent = 'Click Install to add to your device.';
+  });
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    installHint.textContent = (outcome === 'accepted') ? 'Installing…' : 'Install dismissed.';
+    deferredPrompt = null;
+    installBtn.style.display = 'none';
+    setTimeout(()=> installHint.textContent = '', 2000);
+  });
+  window.addEventListener('appinstalled', () => {
+    installHint.textContent = 'Installed!';
+    installBtn.style.display = 'none';
+    setTimeout(()=> installHint.textContent = '', 2000);
+  });
+
+  /* ==================== Chart.js annotation plugin safe register ==================== */
+  (function(){
+    try{
+      const ann = (window && (window['chartjs-plugin-annotation'] || window.ChartAnnotation || window.chartjsPluginAnnotation));
+      if (window.Chart && ann && typeof Chart.register === 'function') Chart.register(ann);
+    }catch(e){ console.warn('Annotation plugin not registered:', e); }
+  })();
+
+  /* ==================== App data & defaults ==================== */
+  const METRICS = [
+    { key:'glucose',     label:'Glucose (mg/dL)',   unit:'mg/dL', type:'number'},
+    { key:'bodyBattery', label:'Body Battery',      unit:'',      type:'number'},
+    { key:'stress',      label:'Stress',            unit:'',      type:'number'},
+    { key:'weightLbs',   label:'Weight (lbs)',      unit:'lbs',   type:'number'},
+    { key:'heightIn',    label:'Height (in)',       unit:'in',    type:'number'},
+    { key:'waistIn',     label:'Waist (in)',        unit:'in',    type:'number'},
+    { key:'tempF',       label:'Temperature (°F)',  unit:'°F',    type:'number'},
+    { key:'lungFluidCc', label:'Lung Fluid (cc)',   unit:'cc',    type:'number'},
+    { key:'sys',         label:'Systolic (mmHg)',   unit:'mmHg',  type:'number'},
+    { key:'dia',         label:'Diastolic (mmHg)',  unit:'mmHg',  type:'number'},
+    { key:'spo2',        label:'SpO₂ (%)',          unit:'%',     type:'number'},
+    { key:'hr',          label:'Heart Rate (bpm)',  unit:'bpm',   type:'number'},
+    { key:'resp',        label:'Respiration (br/min)', unit:'/min', type:'number'},
+    { key:'sleep',       label:'Sleep (hrs)',       unit:'hrs',   type:'number'},
+    { key:'steps',       label:'Steps',             unit:'',      type:'number'},
+    { key:'pain',        label:'Pain (0-10)',       unit:'',      type:'number'},
+    { key:'emotions',    label:'Emotions',          unit:'',      type:'text'},
+    { key:'comments',    label:'Comments',          unit:'',      type:'text'},
+    { key:'meds',        label:'Medicines',         unit:'',      type:'list'},
+  ];
+  const CORE_FIELDS = ['date','time', ...METRICS.map(m=>m.key)];
+  const DEFAULT_FIELDS_VISIBLE = [
+    'date','time','glucose','sys','dia','spo2','hr','weightLbs','heightIn','waistIn','sleep','steps','pain','emotions','comments'
+  ];
+  const DEFAULT_THRESHOLDS = {
+    glucose:{warnLow:70,bandLow:80,bandHigh:140,warnHigh:180},
+    sys:{warnLow:90,bandLow:100,bandHigh:129,warnHigh:140},
+    dia:{warnLow:60,bandLow:60,bandHigh:79,warnHigh:90},
+    spo2:{warnLow:92,bandLow:95,bandHigh:100,warnHigh:101},
+    hr:{warnLow:45,bandLow:50,bandHigh:90,warnHigh:120},
+    tempF:{warnLow:95,bandLow:97,bandHigh:99,warnHigh:101},
+    stress:{warnLow:0,bandLow:0,bandHigh:40,warnHigh:75},
+    bodyBattery:{warnLow:15,bandLow:20,bandHigh:100,warnHigh:999},
+    lungFluidCc:{warnLow:-1,bandLow:0,bandHigh:50,warnHigh:200},
+    weightLbs:{warnLow:0,bandLow:0,bandHigh:999,warnHigh:9999},
+    resp:{warnLow:8,bandLow:10,bandHigh:20,warnHigh:24},
+    sleep:{warnLow:4,bandLow:7,bandHigh:9,warnHigh:14},
+    steps:{warnLow:0,bandLow:5000,bandHigh:10000,warnHigh:20000},
+    pain:{warnLow:0,bandLow:0,bandHigh:3,warnHigh:7},
+    bmi:{warnLow:18.5,bandLow:18.5,bandHigh:24.9,warnHigh:30},
+    whtr:{warnLow:0.34,bandLow:0.34,bandHigh:0.49,warnHigh:0.6},
+  };
+  const OPTIONS = { autosave:'on', csvSelectedOnly:'yes', pdfIncludeChart:'yes' };
+
+  /* ==================== IndexedDB ==================== */
+  const DB = {
+    db:null,
+    open(){
+      return new Promise((resolve,reject)=>{
+        if(!('indexedDB' in window)){ console.warn('IndexedDB not supported'); resolve(); return; }
+        const req = indexedDB.open('health-tracker-db', 1);
+        req.onupgradeneeded = (e)=>{
+          const db = e.target.result;
+          if(!db.objectStoreNames.contains('entries')){
+            const s = db.createObjectStore('entries', {keyPath:'id', autoIncrement:true});
+            s.createIndex('by_date','date');
+          }
+          if(!db.objectStoreNames.contains('config')){
+            db.createObjectStore('config', {keyPath:'key'});
+          }
+        };
+        req.onsuccess = ()=>{ DB.db = req.result; resolve(); };
+        req.onerror   = ()=> reject(req.error);
+      });
+    },
+    putEntry(entry){
+      return new Promise((resolve, reject)=>{
+        if(!DB.db){ resolve(); return; }
+        const tx = DB.db.transaction('entries','readwrite');
+        const store = tx.objectStore('entries');
+        const hasId = entry && entry.id != null;
+        const req = hasId ? store.put(entry) : store.add(entry);
+        req.onsuccess = ()=> resolve();
+        req.onerror   = ()=> reject(req.error);
+      });
+    },
+    deleteEntry(id){
+      return new Promise((resolve,reject)=>{
+        if(!DB.db){ resolve(); return; }
+        const tx = DB.db.transaction('entries','readwrite');
+        tx.objectStore('entries').delete(id);
+        tx.oncomplete=()=>resolve();
+        tx.onerror   =()=>reject(tx.error);
+      });
+    },
+    getAllEntries(){
+      return new Promise((resolve,reject)=>{
+        if(!DB.db){ resolve([]); return; }
+        const tx = DB.db.transaction('entries','readonly');
+        const req = tx.objectStore('entries').getAll();
+        req.onsuccess = ()=> resolve(req.result||[]);
+        req.onerror   = ()=> reject(req.error);
+      });
+    },
+    putConfig(key,value){
+      return new Promise((resolve,reject)=>{
+        if(!DB.db){ resolve(); return; }
+        const tx = DB.db.transaction('config','readwrite');
+        tx.objectStore('config').put({key,value});
+        tx.oncomplete=()=>resolve();
+        tx.onerror   =()=>reject(tx.error);
+      });
+    },
+    getConfig(key){
+      return new Promise((resolve,reject)=>{
+        if(!DB.db){ resolve(null); return; }
+        const tx = DB.db.transaction('config','readonly');
+        const req = tx.objectStore('config').get(key);
+        req.onsuccess = ()=> resolve(req.result ? req.result.value : null);
+        req.onerror   = ()=> reject(req.error);
       });
     }
-    $('btnCheckUpdates').addEventListener('click', async () => {
-      try { $('hint').textContent='Checking…'; if (swReg?.update) await swReg.update();
-        if (swReg?.waiting) swReg.waiting.postMessage({ type:'SKIP_WAITING' });
-        else { $('hint').textContent='No updates found.'; setTimeout(()=> $('hint').textContent='',1500); }
-      } catch (e) { console.warn('Update check failed', e); $('hint').textContent = 'Update check failed.'; setTimeout(()=> $('hint').textContent='',1500); }
+  };
+
+  /* ==================== State & Utils ==================== */
+  const State = {
+    entries: [],
+    fieldsVisible: new Set(DEFAULT_FIELDS_VISIBLE),
+    thresholds: JSON.parse(JSON.stringify(DEFAULT_THRESHOLDS)),
+    options: {...OPTIONS},
+    
+    ui: {
+    chartEnabled: true,       // existing toggle
+    viewMode: 'both',         // 'both' | 'table' | 'chart'
+    collapsedChart: false     // true = hide chartPanel (header stays)
+  },
+
+    editId: null,
+    medsBuffer: [],
+  };
+
+  const U = {
+    toISODate(d){ return d?.toISOString?.().slice(0,10); },
+    parseDateTime(dateStr,timeStr){ if(!dateStr) return null; const t = timeStr&&timeStr.length?timeStr:'00:00'; return new Date(`${dateStr}T${t}`); },
+    fmt(n,dp=0){ if(n==null||isNaN(n)) return '—'; return Number(n).toFixed(dp); },
+    bmi(lbs,inches){ if(!lbs||!inches) return null; return 703*(lbs/(inches*inches)); },
+    whtr(waistIn,heightIn){ if(!waistIn||!heightIn) return null; return waistIn/heightIn; },
+    csvEscape(v){ if(v==null) return ''; const s=typeof v==='string'?v:JSON.stringify(v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; },
+    dateInRange(dateStr,startStr,endStr){ if(!dateStr) return false; const d=new Date(dateStr); if(startStr&&d<new Date(startStr)) return false; if(endStr&&d>new Date(endStr)) return false; return true; }
+  };
+
+  /* ==================== UI ==================== */
+  const UI = {
+    initChartMetricSelector(){
+      const sel=document.getElementById('chartMetrics'); sel.innerHTML='';
+      METRICS.forEach(m=>{
+        if(m.type==='number'||m.key==='pain'){
+          const opt=document.createElement('option'); opt.value=m.key; opt.textContent=m.label;
+          if(['glucose','sys','dia','spo2','hr','weightLbs'].includes(m.key)) opt.selected=true;
+          sel.appendChild(opt);
+        }
+      });
+    },
+    buildTable(){
+      const head=document.getElementById('tableHead'); head.innerHTML='';
+      const tr=document.createElement('tr');
+      const vis=['date','time',...METRICS.map(m=>m.key)].filter(k=>State.fieldsVisible.has(k));
+      vis.forEach(k=>{
+        const m=METRICS.find(x=>x.key===k);
+        const th=document.createElement('th'); th.textContent=m?m.label:(k==='date'?'Date':'Time'); tr.appendChild(th);
+      });
+      const thA=document.createElement('th'); thA.textContent='Actions'; tr.appendChild(thA);
+      head.appendChild(tr);
+
+      const body=document.getElementById('tableBody'); body.innerHTML='';
+      const start=document.getElementById('filterStart').value;
+      const end  =document.getElementById('filterEnd').value;
+      const rows=State.entries
+        .filter(en=>U.dateInRange(en.date,start,end))
+        .sort((a,b)=>((U.parseDateTime(b.date,b.time)?.getTime()||0)-(U.parseDateTime(a.date,a.time)?.getTime()||0)));
+
+      for(const en of rows){
+        const tr=document.createElement('tr');
+        for(const k of vis){
+          const td=document.createElement('td');
+          let val=en[k];
+          if(k==='meds' && Array.isArray(val)) val = val.map(m=>`${m.name} ${m.dose}${m.units?(' '+m.units):''}`).join('; ');
+          td.textContent=(val==null?'':val);
+          tr.appendChild(td);
+        }
+        const tdA=document.createElement('td'); tdA.className='actions';
+        const bE=document.createElement('button'); bE.className='btn'; bE.textContent='Edit'; bE.onclick=()=>UI.openEntry(en.id);
+        const bD=document.createElement('button'); bD.className='btn danger'; bD.textContent='Delete';
+        bD.onclick=async()=>{ await Actions.deleteEntry(en.id); await Actions.refreshAll(); };
+        tdA.appendChild(bE); tdA.appendChild(bD);
+        tr.appendChild(tdA);
+        body.appendChild(tr);
+      }
+    },
+    refreshKPIs(){
+      const sorted=[...State.entries].sort((a,b)=>((U.parseDateTime(b.date,b.time)?.getTime()||0)-(U.parseDateTime(a.date,a.time)?.getTime()||0)));
+      const latest=sorted[0], prev=sorted[1];
+      const set=(id,val)=>document.getElementById(id).textContent=val;
+      if(latest){
+        set('kpiGlucose',U.fmt(latest.glucose));
+        set('kpiBP',(latest.sys!=null&&latest.dia!=null)?`${latest.sys}/${latest.dia}`:'—');
+        const bmi=U.bmi(latest.weightLbs,latest.heightIn); set('kpiBMI',bmi?U.fmt(bmi,1):'—');
+        const whtr=U.whtr(latest.waistIn,latest.heightIn); set('kpiWHtR',whtr?U.fmt(whtr,2):'—');
+        set('kpiSpO2',U.fmt(latest.spo2)); set('kpiHR',U.fmt(latest.hr));
+      } else { set('kpiGlucose','—'); set('kpiBP','—'); set('kpiBMI','—'); set('kpiWHtR','—'); set('kpiSpO2','—'); set('kpiHR','—'); }
+      const trend=(cur,pre)=> (cur!=null&&pre!=null) ? (cur>pre?'↑':'↓') : '';
+      document.getElementById('kpiGlucoseTrend').textContent = latest&&prev?trend(latest.glucose,prev.glucose):'';
+      document.getElementById('kpiBPTrend').textContent      = latest&&prev?trend((latest.sys||0)+(latest.dia||0),(prev.sys||0)+(prev.dia||0)):'';
+      document.getElementById('kpiBMITrend').textContent     = latest&&prev?trend(U.bmi(latest.weightLbs,latest.heightIn)||0,U.bmi(prev.weightLbs,prev.heightIn)||0):'';
+      document.getElementById('kpiVitalsTrend').textContent  = latest&&prev?trend(latest.hr,prev.hr):'';
+      UI.refreshRiskChips(latest);
+    },
+    refreshRiskChips(latest){
+      const wrap=document.getElementById('riskChips'); wrap.innerHTML='';
+      if(!latest){ wrap.innerHTML='<span class="small">No data yet.</span>'; return; }
+      const chip=(txt,level)=>{ const d=document.createElement('div'); d.className=`chip ${level}`;
+        const icon=level==='danger'?'⚠️':(level==='warn'?'🟨':'🟢'); d.textContent=`${icon} ${txt}`; wrap.appendChild(d); };
+      const T=State.thresholds;
+      const assess=(key,val,label)=>{
+        if(val==null) return; const th=T[key]; if(!th) return;
+        if(val<th.warnLow || val>th.warnHigh) chip(`${label}: ${U.fmt(val)} (Critical)`,'danger');
+        else if(val<th.bandLow || val>th.bandHigh) chip(`${label}: ${U.fmt(val)} (Watch)`,'warn');
+        else chip(`${label}: ${U.fmt(val)} (OK)`,'ok');
+      };
+      assess('glucose',latest.glucose,'Glucose'); assess('sys',latest.sys,'Systolic'); assess('dia',latest.dia,'Diastolic');
+      assess('spo2',latest.spo2,'SpO₂'); assess('tempF',latest.tempF,'Temp'); assess('hr',latest.hr,'HR'); assess('resp',latest.resp,'Resp');
+      assess('stress',latest.stress,'Stress'); assess('bodyBattery',latest.bodyBattery,'Body Battery'); assess('lungFluidCc',latest.lungFluidCc,'Lung Fluid');
+      assess('sleep',latest.sleep,'Sleep'); assess('steps',latest.steps,'Steps'); assess('pain',latest.pain,'Pain');
+      const bmi=U.bmi(latest.weightLbs,latest.heightIn); if(bmi!=null) assess('bmi',bmi,'BMI');
+      const whtr=U.whtr(latest.waistIn,latest.heightIn); if(whtr!=null) assess('whtr',whtr,'WHtR');
+    },
+
+    chart:null,
+    refreshChart(){
+      // Toggle OFF → destroy and skip
+      if (State.ui.chartEnabled === false) {
+        if (UI.chart) { UI.chart.destroy(); UI.chart = null; }
+        return;
+      }
+      // No Chart.js → skip
+      if(!window.Chart) return;
+
+      const metricKeys=Array.from(document.getElementById('chartMetrics').selectedOptions).map(o=>o.value);
+      if (!metricKeys.length) { if (UI.chart) { UI.chart.destroy(); UI.chart = null; } return; }
+
+      const canvas=document.getElementById('metricsChart');
+      const start=document.getElementById('filterStart').value;
+      const end  =document.getElementById('filterEnd').value;
+      const axisMode=document.getElementById('axisMode').value;
+
+      const rows=State.entries
+        .filter(e=>U.dateInRange(e.date,start,end))
+        .sort((a,b)=>((U.parseDateTime(a.date,a.time)?.getTime()||0)-(U.parseDateTime(b.date,b.time)?.getTime()||0)));
+
+      const labels=rows.map(r=>{
+        const d=U.parseDateTime(r.date,r.time); return d?(d.toLocaleDateString()+' '+(r.time||'')):(r.date||'');
+      });
+
+      const palette=['#60a5fa','#34d399','#f472b6','#f59e0b','#a78bfa','#38bdf8',
+                     '#f87171','#22d3ee','#e879f9','#fde047','#fb7185','#93c5fd',
+                     '#86efac','#c084fc','#fda4af'];
+
+      const yAxes={};
+      const datasets=metricKeys.map((k,idx)=>{
+        const m=METRICS.find(x=>x.key===k);
+        const data=rows.map(r=>r[k] ?? null);
+        const color=palette[idx%palette.length];
+        const yAxisID=axisMode==='perMetric'?`y_${k}`:'y';
+        if(!yAxes[yAxisID]){
+          yAxes[yAxisID]={
+            type:'linear', display:true, position:(Object.keys(yAxes).length%2?'right':'left'),
+            grid:{ drawOnChartArea:(axisMode==='single') },
+            title:{display:true, text:(axisMode==='single'?'Value':(m?.label||k))}
+          };
+        }
+        return { label:(m?.label||k), data, borderColor:color, backgroundColor:color+'66', tension:.25, spanGaps:true, yAxisID };
+      });
+
+      // Annotations (register exists?)
+      const annotations={};
+      const hasAnn = !!(window.Chart?.registry?.plugins?.get?.('annotation') || window['chartjs-plugin-annotation']);
+      if (hasAnn) {
+        const addLine=(id,y,color,label)=>{
+          if(y==null||isNaN(y)) return;
+          annotations[id]={type:'line',yMin:y,yMax:y,borderColor:color,borderWidth:1,
+            label:{display:true,content:label,position:'start',color:'#cfe8ff',backgroundColor:'#0b1220cc'}};
+        };
+        const addBand=(id,y1,y2,color)=>{
+          if([y1,y2].some(v=>v==null||isNaN(v))) return;
+          annotations[id]={type:'box',yMin:y1,yMax:y2,backgroundColor:color,borderWidth:0};
+        };
+        metricKeys.forEach(k=>{
+          const th=State.thresholds[k]; if(!th) return;
+          const yAxisID=axisMode==='perMetric'?`y_${k}`:'y';
+          const base=`${yAxisID}_${k}`;
+          addBand(`${base}_band`,th.bandLow,th.bandHigh,'rgba(39,215,155,0.08)');
+          addLine(`${base}_warnLow`,th.warnLow,'#ffcc66','Warn Low');
+          addLine(`${base}_warnHigh`,th.warnHigh,'#ffcc66','Warn High');
+        });
+      }
+
+      const config={
+        type:'line',
+        data:{labels,datasets},
+        options:{
+          responsive:true, maintainAspectRatio:false,
+          plugins:{
+            legend:{ labels:{ color:'#dbeafe' } },
+            annotation:{ annotations }
+          },
+          scales:Object.assign({
+            x:{ ticks:{ color:'#9fb2d6' }, grid:{ color:'#13213d' } },
+            y:{ ticks:{ color:'#9fb2d6' }, grid:{ color:'#13213d' } }
+          }, yAxes)
+        }
+      };
+
+      if(UI.chart){ UI.chart.destroy(); }
+      UI.chart=new Chart(canvas.getContext('2d'),config);
+    },
+
+    openEntry(id=null){
+      State.editId = id;
+      document.getElementById('entryModal').classList.add('show');
+      document.getElementById('btnDeleteEntry').style.display = id ? '' : 'none';
+      document.getElementById('entryModalTitle').textContent = id ? 'Edit Entry' : 'Add Entry';
+      State.medsBuffer = [];
+
+      if(id){
+        const en=State.entries.find(x=>x.id===id); if(!en) return;
+        const map=(idk,v)=>{ const el=document.getElementById(idk); if(el) el.value=(v??''); };
+        document.getElementById('f_date').value=en.date||'';
+        document.getElementById('f_time').value=en.time||'';
+        map('f_glucose',en.glucose); map('f_bodyBattery',en.bodyBattery); map('f_stress',en.stress);
+        map('f_weightLbs',en.weightLbs); map('f_heightIn',en.heightIn); map('f_waistIn',en.waistIn);
+        map('f_tempF',en.tempF); map('f_lungFluidCc',en.lungFluidCc); map('f_sys',en.sys); map('f_dia',en.dia);
+        map('f_spo2',en.spo2); map('f_hr',en.hr); map('f_resp',en.resp); map('f_sleep',en.sleep); map('f_steps',en.steps);
+        map('f_pain',en.pain??0); document.getElementById('painVal').textContent=en.pain??0;
+        document.getElementById('f_emotions').value=en.emotions||''; document.getElementById('f_comments').value=en.comments||'';
+        State.medsBuffer = Array.isArray(en.meds)? JSON.parse(JSON.stringify(en.meds)) : [];
+      } else {
+        document.getElementById('f_date').value=U.toISODate(new Date());
+        document.getElementById('f_time').value=new Date().toTimeString().slice(0,5);
+        ['glucose','bodyBattery','stress','weightLbs','heightIn','waistIn','tempF','lungFluidCc','sys','dia','spo2','hr','resp','sleep','steps'].forEach(k=>{
+          const el=document.getElementById('f_'+k); if(el) el.value='';
+        });
+        document.getElementById('f_pain').value=0; document.getElementById('painVal').textContent='0';
+        document.getElementById('f_emotions').value=''; document.getElementById('f_comments').value='';
+      }
+      UI.renderMedsBuffer();
+    },
+    closeEntry(){ document.getElementById('entryModal').classList.remove('show'); },
+
+    openFields(){
+      document.getElementById('fieldsModal').classList.add('show');
+      const grid=document.getElementById('fieldsGrid'); grid.innerHTML='';
+      const all=['date','time',...METRICS.map(m=>m.key)];
+      for(const k of all){
+        const m=METRICS.find(x=>x.key===k);
+        const lab=m?m.label:(k==='date'?'Date':'Time');
+        const id='fld_'+k;
+        const wrap=document.createElement('div');
+        const cb=document.createElement('input'); cb.type='checkbox'; cb.id=id; cb.checked=State.fieldsVisible.has(k);
+        cb.onchange=()=>{ if(cb.checked) State.fieldsVisible.add(k); else State.fieldsVisible.delete(k); };
+        const lb=document.createElement('label'); lb.htmlFor=id; lb.textContent=lab;
+        wrap.appendChild(cb); wrap.appendChild(lb); grid.appendChild(wrap);
+      }
+    },
+    closeFields(){ document.getElementById('fieldsModal').classList.remove('show'); },
+
+    openThresholds(){
+      document.getElementById('thModal').classList.add('show');
+      const host=document.getElementById('thEditor'); host.innerHTML='';
+      function box(title, html){
+        const d=document.createElement('div'); d.className='card'; d.style.marginBottom='10px';
+        d.innerHTML=`<h2>${title}</h2>${html}`; host.appendChild(d);
+      }
+      const keys=['glucose','sys','dia','spo2','hr','tempF','stress','bodyBattery','lungFluidCc','resp','sleep','steps','pain','bmi','whtr'];
+      keys.forEach(k=>{
+        const th=State.thresholds[k]||{warnLow:'',bandLow:'',bandHigh:'',warnHigh:''};
+        const title=(METRICS.find(m=>m.key===k)?.label)||k.toUpperCase();
+        box(title,`
+          <div class="row">
+            <div><label>Warn Low</label><input type="number" id="t_${k}_warnLow" value="${th.warnLow}"></div>
+            <div><label>Band Low</label><input type="number" id="t_${k}_bandLow" value="${th.bandLow}"></div>
+            <div><label>Band High</label><input type="number" id="t_${k}_bandHigh" value="${th.bandHigh}"></div>
+            <div><label>Warn High</label><input type="number" id="t_${k}_warnHigh" value="${th.warnHigh}"></div>
+          </div>
+        `);
+      });
+    },
+    closeThresholds(){ document.getElementById('thModal').classList.remove('show'); },
+
+    openOptions(){
+      document.getElementById('optModal').classList.add('show');
+      document.getElementById('optAutosave').value=State.options.autosave;
+      document.getElementById('optCsvSelected').value=State.options.csvSelectedOnly;
+      document.getElementById('optPdfChart').value=State.options.pdfIncludeChart;
+    },
+    closeOptions(){ document.getElementById('optModal').classList.remove('show'); },
+
+    renderMedsBuffer(){
+      const host=document.getElementById('medList'); host.innerHTML='';
+      State.medsBuffer.forEach((m,idx)=>{
+        const chip=document.createElement('div'); chip.className='chip';
+        chip.textContent=`${m.name} ${m.dose}${m.units?(' '+m.units):''}`;
+        const btn=document.createElement('button'); btn.className='btn danger'; btn.style.padding='2px 6px'; btn.style.marginLeft='6px'; btn.textContent='x';
+        btn.onclick=()=>{ State.medsBuffer.splice(idx,1); UI.renderMedsBuffer(); };
+        chip.appendChild(btn); host.appendChild(chip);
+      });
+    }
+  };
+
+  /* ==================== Actions ==================== */
+  const Actions = {
+    async init(){
+      await DB.open();
+      const fields=await DB.getConfig('fieldsVisible'); if(fields) State.fieldsVisible=new Set(fields);
+      const thresholds=await DB.getConfig('thresholds'); if(thresholds) State.thresholds=thresholds;
+      const options=await DB.getConfig('options'); if(options) State.options=options;
+      const ui=await DB.getConfig('ui'); if(ui && typeof ui.chartEnabled==='boolean') State.ui.chartEnabled=ui.chartEnabled;
+
+      // Apply chart toggle in UI
+      document.getElementById('toggleChart').value = State.ui.chartEnabled ? 'on' : 'off';
+      document.getElementById('chartCard').style.display = State.ui.chartEnabled ? '' : 'none';
+	  
+	  // Load new UI prefs if present
+if (ui && typeof ui.viewMode === 'string') State.ui.viewMode = ui.viewMode;
+if (ui && typeof ui.collapsedChart === 'boolean') State.ui.collapsedChart = ui.collapsedChart;
+
+// Initialize controls to saved values
+const viewSel = document.getElementById('viewMode');
+if (viewSel) viewSel.value = State.ui.viewMode || 'both';
+
+// Apply view + collapse states to the DOM
+applyViewMode();
+setChartCollapsed(State.ui.collapsedChart);
+updateCollapseButton();
+
+      State.entries=await DB.getAllEntries();
+      UI.initChartMetricSelector();
+      UI.buildTable();
+      UI.refreshKPIs();
+      UI.refreshChart();
+    },
+    async saveEntryFromForm(){
+      const isEdit = State.editId != null;
+      const en = {
+        date: document.getElementById('f_date').value || null,
+        time: document.getElementById('f_time').value || null,
+        glucose: num('f_glucose'),
+        bodyBattery: num('f_bodyBattery'),
+        stress: num('f_stress'),
+        weightLbs: num('f_weightLbs'),
+        heightIn: num('f_heightIn'),
+        waistIn: num('f_waistIn'),
+        tempF: num('f_tempF'),
+        lungFluidCc: num('f_lungFluidCc'),
+        sys: num('f_sys'),
+        dia: num('f_dia'),
+        spo2: num('f_spo2'),
+        hr: num('f_hr'),
+        resp: num('f_resp'),
+        sleep: num('f_sleep'),
+        steps: num('f_steps'),
+        pain: num('f_pain'),
+        emotions: document.getElementById('f_emotions').value || '',
+        comments: document.getElementById('f_comments').value || '',
+        meds: JSON.parse(JSON.stringify(State.medsBuffer)),
+      };
+      if(isEdit) en.id = Number(State.editId);
+      function num(id){ const v=document.getElementById(id).value; return v===''?null:Number(v); }
+      if(!en.date){ alert('Date is required.'); return; }
+      await DB.putEntry(en);
+      State.editId = null;
+      UI.closeEntry();
+    },
+    async deleteEntry(id){ await DB.deleteEntry(id); },
+    async refreshAll(){ State.entries=await DB.getAllEntries(); UI.buildTable(); UI.refreshKPIs(); UI.refreshChart(); },
+    async saveFields(){ await DB.putConfig('fieldsVisible', Array.from(State.fieldsVisible)); UI.closeFields(); UI.buildTable(); },
+    async saveThresholds(){
+      const keys=Object.keys(State.thresholds); const merged={...State.thresholds};
+      for(const k of keys){
+        const pick=n=>Number(document.getElementById(`t_${k}_${n}`).value);
+        const wl=pick('warnLow'), bl=pick('bandLow'), bh=pick('bandHigh'), wh=pick('warnHigh');
+        if([wl,bl,bh,wh].every(v=>!isNaN(v))) merged[k]={warnLow:wl,bandLow:bl,bandHigh:bh,warnHigh:wh};
+      }
+      State.thresholds=merged; await DB.putConfig('thresholds',merged);
+      UI.closeThresholds(); UI.refreshKPIs(); UI.refreshChart();
+    },
+    async saveOptions(){
+      State.options={
+        autosave: document.getElementById('optAutosave').value,
+        csvSelectedOnly: document.getElementById('optCsvSelected').value,
+        pdfIncludeChart: document.getElementById('optPdfChart').value,
+      };
+      await DB.putConfig('options', State.options);
+      UI.closeOptions();
+    },
+    exportCSV(){
+      try{
+        const start=document.getElementById('filterStart').value;
+        const end  =document.getElementById('filterEnd').value;
+        const rows=State.entries.filter(e=>U.dateInRange(e.date,start,end));
+        const fields=State.options.csvSelectedOnly==='yes' ? [...State.fieldsVisible] : CORE_FIELDS;
+
+        const headers=[]; if(fields.includes('date')) headers.push('date'); if(fields.includes('time')) headers.push('time');
+        CORE_FIELDS.filter(f=>!['date','time'].includes(f)).forEach(f=>{ if(fields.includes(f)) headers.push(f); });
+
+        let csv=headers.join(',')+'\n';
+        for(const r of rows){
+          const vals=headers.map(h=>{
+            let v=r[h];
+            if(h==='meds') v=Array.isArray(v)? v.map(m=>`${m.name} ${m.dose}${m.units?(' '+m.units):''}`).join('; ') : '';
+            return U.csvEscape(v==null?'':v);
+          });
+          csv+=vals.join(',')+'\n';
+        }
+        const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+        const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+        a.download=`health-tracker_${U.toISODate(new Date())}.csv`; a.click(); URL.revokeObjectURL(a.href);
+      }catch(err){ console.error(err); alert('CSV export failed. See console for details.'); }
+    }
+  };
+
+  /* ==================== PDF Export (robust + shortened headers) ==================== */
+  Actions.exportPDF = async function exportPDF(){
+    try{
+      if(!window.jspdf){ alert('jsPDF failed to load.'); return; }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({unit:'pt', format:'a4'});
+
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const margin = 36;
+      const contentW = pageW - margin*2;
+      const bottomLimit = pageH - margin;
+
+      let y = margin;
+      doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(20);
+      doc.text('Health Tracker Export', margin, y); y += 18;
+      doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(30);
+      doc.text(`Generated: ${new Date().toLocaleString()}`, margin, y); y += 16;
+
+      const start=document.getElementById('filterStart').value;
+      const end  =document.getElementById('filterEnd').value;
+      const parseDT=(d,t)=>{ if(!d) return 0; const T=t&&t.length?t:'00:00'; const X=new Date(`${d}T${T}`); return X.getTime()||0; };
+
+      const all=(State.entries||[])
+        .filter(e=>{
+          if(!e.date) return false;
+          const D=new Date(e.date);
+          if(start && D<new Date(start)) return false;
+          if(end   && D>new Date(end))   return false;
+          return true;
+        })
+        .sort((a,b)=>parseDT(a.date,a.time) - parseDT(b.date,b.time));
+
+      // Visible headers (date/time first)
+      const visible = new Set(State.fieldsVisible||[]);
+      const baseHeaders = ['date','time', ...METRICS.map(m=>m.key)].filter(k=>visible.has(k));
+      const headers=[]; if(baseHeaders.includes('date')) headers.push('date'); if(baseHeaders.includes('time')) headers.push('time');
+      baseHeaders.forEach(h=>{ if(!['date','time'].includes(h)) headers.push(h); });
+      if(!headers.length) headers.push('date','time');
+
+      // Include chart in PDF only if requested AND chart enabled and has data
+      const wantChart = (State.options?.pdfIncludeChart==='yes') && State.ui.chartEnabled===true;
+      if (wantChart && UI.chart && typeof UI.chart.toBase64Image==='function') {
+        // Ensure chart has any data point
+        const hasAnyPoint = (UI.chart.data?.datasets||[]).some(ds => (ds.data||[]).some(v => v != null && v !== ''));
+        if (hasAnyPoint) {
+          // Force update before capture to avoid blank image
+          try { UI.chart.update('none'); } catch {}
+          const url=UI.chart.toBase64Image('image/png', 1.0);
+          if (url && /^data:image\/png;base64,/.test(url)) {
+            const chartH=220;
+            if(y+chartH+10>bottomLimit){ doc.addPage(); y=margin; }
+            doc.addImage(url,'PNG',margin,y,contentW,chartH,undefined,'FAST');
+            y += chartH + 12;
+          }
+        }
+      }
+
+      // Rows to print (flatten meds)
+      const rows = all.map(r=>{
+        const flat={...r};
+        if(Array.isArray(flat.meds)){
+          flat.meds = flat.meds.map(m=>`${m.name} ${m.dose}${m.units?(' '+m.units):''}`).join('; ');
+        }
+        return flat;
+      });
+
+      // Header label helpers
+      const LABEL_ABBR = {
+        'Glucose (mg/dL)':'Glucose','Systolic (mmHg)':'Sys','Diastolic (mmHg)':'Dia',
+        'Temperature (°F)':'Temp','Heart Rate (bpm)':'HR','Respiration (br/min)':'Resp',
+        'Body Battery':'BodyBat','SpO₂ (%)':'SpO2','Lung Fluid (cc)':'LungFl',
+        'Weight (lbs)':'Wt','Height (in)':'Ht','Waist (in)':'Waist',
+        'Sleep (hrs)':'Sleep','Medicines':'Meds','Emotions':'Mood','Comments':'Notes'
+      };
+      const labelOf=(k)=> (k==='date'?'Date':(k==='time'?'Time':(METRICS.find(x=>x.key===k)?.label||k.toUpperCase())));
+      function shortLabel(label, colW){
+        const abbr = LABEL_ABBR[label] || label;
+        const maxChars = Math.max(3, Math.floor((colW - 8) / 6)); // ~6px per char @10pt
+        return abbr.length > maxChars ? (abbr.slice(0, maxChars-1) + '…') : abbr;
+      }
+      const chunk=(arr,n)=>{ const out=[]; for(let i=0;i<arr.length;i+=n) out.push(arr.slice(i,i+n)); return out; };
+
+      // Table render
+      const maxColsPerChunk=6;
+      const headerChunks=chunk(headers,maxColsPerChunk);
+      const cellPadX=4, cellPadY=3;
+      const headerH=14, rowBaseH=12;
+
+      doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(15);
+
+      for(const cols of headerChunks){
+        const colW=Math.floor(contentW/Math.max(1,cols.length));
+        if(y+headerH+6>bottomLimit){ doc.addPage(); y=margin; }
+
+        // header row
+        let x=margin;
+        doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(20);
+        cols.forEach(col=>{
+          const lbl = labelOf(col);
+          doc.text(shortLabel(lbl, colW), x+cellPadX, y+10);
+          x+=colW;
+        });
+        doc.setDrawColor(160); doc.setLineWidth(0.5);
+        doc.line(margin,y+headerH,margin+contentW,y+headerH);
+        y+=headerH+4;
+
+        // body rows
+        doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(15);
+        for(const r of rows){
+          let rowH=rowBaseH;
+          const wrapped=cols.map(col=>{
+            let v=r[col]; if(v==null) v=''; v=String(v);
+            const lines=doc.splitTextToSize(v, colW - cellPadX*2);
+            const h=lines.length*12 + cellPadY*2;
+            if(h>rowH) rowH=h;
+            return lines;
+          });
+
+          if(y+rowH>bottomLimit){ doc.addPage(); y=margin; }
+
+          let xCell=margin;
+          for(let i=0;i<cols.length;i++){
+            let lineY=y+10;
+            for(const ln of wrapped[i]){ doc.text(ln, xCell+cellPadX, lineY); lineY+=12; }
+            xCell+=colW;
+          }
+          y+=rowH;
+        }
+        y+=10;
+      }
+
+      const stamp=new Date().toISOString().slice(0,10);
+      doc.save(`health-tracker_${stamp}.pdf`);
+    }catch(err){
+      console.error(err);
+      alert('PDF export failed. See console for details.');
+    }
+  };
+
+  /* ==================== Events ==================== */
+  document.getElementById('btnAdd').addEventListener('click', ()=> UI.openEntry(null));
+  document.getElementById('btnFields').addEventListener('click', ()=> UI.openFields());
+  document.getElementById('btnThresholds').addEventListener('click', ()=> UI.openThresholds());
+  document.getElementById('btnOptions').addEventListener('click', ()=> UI.openOptions());
+  document.getElementById('btnSaveFields').addEventListener('click', Actions.saveFields);
+  document.getElementById('btnSaveThresholds').addEventListener('click', Actions.saveThresholds);
+  document.getElementById('btnSaveOptions').addEventListener('click', Actions.saveOptions);
+
+  document.getElementById('btnSaveEntry').addEventListener('click', async ()=>{
+    await Actions.saveEntryFromForm(); await Actions.refreshAll();
+  });
+  document.getElementById('btnDeleteEntry').addEventListener('click', async ()=>{
+    if(State.editId!=null && confirm('Delete this entry?')){
+      await Actions.deleteEntry(State.editId); UI.closeEntry(); await Actions.refreshAll();
+    }
+  });
+  document.getElementById('btnRefresh').addEventListener('click', ()=>{
+    UI.buildTable(); UI.refreshKPIs(); UI.refreshChart();
+  });
+  document.getElementById('btnSaveCSV').addEventListener('click', Actions.exportCSV);
+  document.getElementById('btnSavePDF').addEventListener('click', Actions.exportPDF);
+
+  document.getElementById('btnAddMed').addEventListener('click', ()=>{
+    const name=document.getElementById('med_name').value.trim();
+    const dose=document.getElementById('med_dose').value.trim();
+    const units=document.getElementById('med_units').value.trim();
+    if(!name) return;
+    State.medsBuffer.push({name,dose,units});
+    document.getElementById('med_name').value='';
+    document.getElementById('med_dose').value='';
+    document.getElementById('med_units').value='';
+    UI.renderMedsBuffer();
+  });
+
+  // Filters & chart controls
+  document.getElementById('chartMetrics').addEventListener('change', ()=> UI.refreshChart());
+  document.getElementById('axisMode').addEventListener('change', ()=> UI.refreshChart());
+  document.getElementById('filterStart').addEventListener('change', ()=> { UI.buildTable(); UI.refreshChart(); });
+  document.getElementById('filterEnd').addEventListener('change',   ()=> { UI.buildTable(); UI.refreshChart(); });
+
+  // Chart toggle (persist)
+  document.getElementById('toggleChart').addEventListener('change', async (e)=>{
+  State.ui.chartEnabled = (e.target.value === 'on');
+
+  // If chart was turned off while in 'chart' view, fall back to 'table'
+  if (!State.ui.chartEnabled && State.ui.viewMode === 'chart') {
+    State.ui.viewMode = 'table';
+    const viewSel = document.getElementById('viewMode');
+    if (viewSel) viewSel.value = 'table';
+  }
+
+  // Apply visibility and cleanup
+  applyViewMode();
+
+  if (!State.ui.chartEnabled && UI.chart) {
+    UI.chart.destroy();
+    UI.chart = null;
+  }
+
+  await DB.putConfig('ui', State.ui);
+  UI.refreshChart();
+});
+``
+  
+  /* ==================== View mode + chart collapse ==================== */
+
+// Persist helper
+async function saveUI() {
+  await DB.putConfig('ui', State.ui);
+}
+
+// Show/hide entries & chart cards based on viewMode + chartEnabled
+function applyViewMode() {
+  const entriesCard = document.getElementById('entriesCard');
+  const chartCard   = document.getElementById('chartCard');
+
+  const vm   = State.ui.viewMode || 'both';
+  const showChart = State.ui.chartEnabled === true;
+
+  // Decide visibility
+  const showEntriesByVM = (vm === 'both' || vm === 'table');
+  const showChartByVM   = (vm === 'both' || vm === 'chart');
+
+  if (entriesCard) entriesCard.style.display = showEntriesByVM ? '' : 'none';
+  if (chartCard)   chartCard.style.display   = (showChartByVM && showChart) ? '' : 'none';
+
+  // If user asked "chart only" but chart was disabled, auto-enable it
+  if (vm === 'chart' && !showChart) {
+    State.ui.chartEnabled = true;
+    const toggle = document.getElementById('toggleChart');
+    if (toggle) toggle.value = 'on';
+    if (chartCard) chartCard.style.display = '';
+    saveUI();
+  }
+
+  // If chart panel is visible and chart is enabled, re-render to ensure sizing is correct
+  if ((vm === 'both' || vm === 'chart') && State.ui.chartEnabled) {
+    // defer refresh slightly to let layout settle
+    setTimeout(() => UI.refreshChart?.(), 0);
+  }
+}
+
+// Collapse / expand: hide the chart panel; header remains
+function setChartCollapsed(collapsed) {
+  const panel = document.getElementById('chartPanel');
+  if (!panel) return;
+  panel.style.display = collapsed ? 'none' : '';
+}
+
+function updateCollapseButton() {
+  const btn = document.getElementById('btnCollapseChart');
+  if (!btn) return;
+  btn.textContent = State.ui.collapsedChart ? 'Expand' : 'Collapse';
+  btn.title = State.ui.collapsedChart ? 'Expand chart area' : 'Collapse chart area';
+}
+
+// Wire: collapse button
+const btnCollapse = document.getElementById('btnCollapseChart');
+if (btnCollapse) {
+  btnCollapse.addEventListener('click', async () => {
+    State.ui.collapsedChart = !State.ui.collapsedChart;
+    setChartCollapsed(State.ui.collapsedChart);
+    updateCollapseButton();
+    await saveUI();
+    // When expanding, ensure chart resizes correctly
+    if (!State.ui.collapsedChart && State.ui.chartEnabled) {
+      setTimeout(() => UI.refreshChart?.(), 0);
+    }
+  });
+}
+
+// Wire: view mode select
+const viewSel = document.getElementById('viewMode');
+if (viewSel) {
+  viewSel.addEventListener('change', async (e) => {
+    const val = e.target.value || 'both';
+    State.ui.viewMode = (val === 'table' || val === 'chart') ? val : 'both';
+
+    // If user selects "chart", ensure chart is enabled
+    if (State.ui.viewMode === 'chart' && !State.ui.chartEnabled) {
+      State.ui.chartEnabled = true;
+      const toggle = document.getElementById('toggleChart');
+      if (toggle) toggle.value = 'on';
+    }
+
+    applyViewMode();
+    await saveUI();
+  });
+}
+``
+
+  // Close modals by clicking backdrop
+  for(const id of ['entryModal','fieldsModal','thModal','optModal']){
+    document.getElementById(id).addEventListener('click',(ev)=>{
+      if(ev.target.classList.contains('modal-backdrop')) ev.target.classList.remove('show');
     });
+  }
+
+  // Init
+  (async ()=>{ await Actions.init(); })();
   </script>
 </body>
 </html>
