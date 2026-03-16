@@ -295,6 +295,75 @@
 </div>
     </div>
   </div>
+  
+  // === New: “Select Fields” extra actions ===
+document.getElementById('btnQuickAdd').addEventListener('click', () => {
+  UI.openEntry(null); // reuse existing Add Entry flow
+});
+
+document.getElementById('btnBulkDelete').addEventListener('click', () => {
+  UI.openBulkRemove();
+});
+
+// Mode toggle inside bulk remove modal
+document.getElementById('rm_mode').addEventListener('change', (e) => {
+  const wrap = document.getElementById('rm_range_wrap');
+  wrap.style.display = (e.target.value === 'range') ? '' : 'none';
+});
+
+// Confirm remove
+document.getElementById('btnConfirmBulkRemove').addEventListener('click', async () => {
+  const mode = document.getElementById('rm_mode').value;
+  const rmStart = document.getElementById('rm_start').value;
+  const rmEnd   = document.getElementById('rm_end').value;
+
+  let targets = [];
+
+  if (mode === 'all') {
+    // ALL entries
+    targets = [...State.entries];
+  } else {
+    // Range mode — inclusive of endpoints
+    const inRange = (dateStr) => {
+      if (!dateStr) return false;
+      const d = new Date(dateStr);
+      if (rmStart && d < new Date(rmStart)) return false;
+      if (rmEnd && d > new Date(rmEnd)) return false;
+      return true;
+    };
+    targets = State.entries.filter(e => inRange(e.date));
+  }
+
+  if (!targets.length) {
+    alert('No entries match the selected criteria.');
+    return;
+  }
+
+  const label = (mode === 'all')
+    ? 'ALL entries'
+    : `entries from ${rmStart || 'beginning'} to ${rmEnd || 'now'}`;
+
+  if (!confirm(`This will permanently delete ${targets.length} ${label}.\n\nAre you sure?`)) {
+    return;
+  }
+
+  try {
+    // Delete one by one via existing DB API
+    for (const en of targets) {
+      if (en && typeof en.id !== 'undefined') {
+        await DB.deleteEntry(en.id);
+      }
+    }
+    UI.closeBulkRemove();
+    // Re-load from DB and refresh UI
+    await Actions.refreshAll();
+    alert(`Deleted ${targets.length} ${label}.`);
+  } catch (err) {
+    console.error(err);
+    alert('Failed to remove entries. See console for details.');
+  }
+});
+
 
   <!-- Threshold Editor Modal -->
   <div class="modal-backdrop" id="thModal">
@@ -345,6 +414,45 @@
       </div>
     </div>
   </div>
+  
+  <!-- Bulk Remove Entries Modal -->
+<div class="modal-backdrop" id="bulkRemoveModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Remove Entries</h2>
+      <button class="btn" onclick="UI.closeBulkRemove()">Close</button>
+    </div>
+
+    <div class="card" style="margin-bottom:10px">
+      <div class="row">
+        <div>
+          <label>Delete Mode</label>
+          <select id="rm_mode">
+            <option value="range" selected>By Date Range</option>
+            <option value="all">Delete ALL Entries</option>
+          </select>
+        </div>
+        <div id="rm_range_wrap" style="display:flex; gap:8px; align-items:flex-end;">
+          <div>
+            <label>From (inclusive)</label>
+            <input type="date" id="rm_start">
+          </div>
+          <div>
+            <label>To (inclusive)</label>
+            <input type="date" id="rm_end">
+          </div>
+        </div>
+      </div>
+      <div class="small" style="margin-top:6px; color:#9fb2d6">
+        Tip: Use “Delete ALL Entries” with caution. This cannot be undone.
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn danger" id="btnConfirmBulkRemove">Remove</button>
+    </div>
+  </div>
+</div>
 
   <script>
   'use strict';
@@ -703,6 +811,20 @@
       const bmi=U.bmi(latest.weightLbs,latest.heightIn); if(bmi!=null) assess('bmi',bmi,'BMI');
       const whtr=U.whtr(latest.waistIn,latest.heightIn); if(whtr!=null) assess('whtr',whtr,'WHtR');
     },
+	
+	
+// … inside UI = { … }:
+openBulkRemove(){
+  // default mode = range; show the range controls unless user selects "all"
+  document.getElementById('rm_mode').value = 'range';
+  document.getElementById('rm_range_wrap').style.display = '';
+  document.getElementById('rm_start').value = '';
+  document.getElementById('rm_end').value = '';
+  document.getElementById('bulkRemoveModal').classList.add('show');
+},
+closeBulkRemove(){
+  document.getElementById('bulkRemoveModal').classList.remove('show');
+},
 
     chart:null,
     refreshChart(){
