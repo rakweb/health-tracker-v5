@@ -280,16 +280,19 @@
   </div>
 
   <!-- Field Selection Modal -->
-  <div class="modal-backdrop" id="fieldsModal">
-    <div class="modal">
-      <div class="modal-header">
-        <h2>Select Fields</h2>
-        <button class="btn" onclick="UI.closeFields()">Close</button>
-      </div>
-      <div class="field-grid" id="fieldsGrid"></div>
-      <div class="modal-actions">
-        <button class="btn" id="btnSaveFields">Save Fields</button>
-      </div>
+  <div class="modal-header" style="gap:8px; align-items:center;">
+  <h2 style="flex:1">Select Fields</h2>
+  <div style="display:flex; gap:8px; align-items:center;">
+    <button class="btn ok" id="btnQuickAdd" title="Add a new entry">Add Entry</button>
+    <button class="btn danger" id="btnBulkDelete" title="Bulk remove entries">Remove Entries…</button>
+    <button class="btn" onclick="UI.closeFields()">Close</button>
+  </div>
+</div>
+
+<div class="field-grid" id="fieldsGrid"></div>
+<div class="modal-actions">
+  <button class="btn" id="btnSaveFields">Save Fields</button>
+</div>
     </div>
   </div>
 
