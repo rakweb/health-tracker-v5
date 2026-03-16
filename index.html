@@ -280,7 +280,10 @@
   </div>
 
   <!-- Field Selection Modal -->
-  <div class="modal-header" style="gap:8px; align-items:center;">
+  <div class="modal-backdrop" id="fieldsModal">
+    <div class="modal">
+      
+<div class="modal-header" style="gap:8px; align-items:center;">
   <h2 style="flex:1">Select Fields</h2>
   <div style="display:flex; gap:8px; align-items:center;">
     <button class="btn ok" id="btnQuickAdd" title="Add a new entry">Add Entry</button>
@@ -295,75 +298,6 @@
 </div>
     </div>
   </div>
-  
-  // === New: “Select Fields” extra actions ===
-document.getElementById('btnQuickAdd').addEventListener('click', () => {
-  UI.openEntry(null); // reuse existing Add Entry flow
-});
-
-document.getElementById('btnBulkDelete').addEventListener('click', () => {
-  UI.openBulkRemove();
-});
-
-// Mode toggle inside bulk remove modal
-document.getElementById('rm_mode').addEventListener('change', (e) => {
-  const wrap = document.getElementById('rm_range_wrap');
-  wrap.style.display = (e.target.value === 'range') ? '' : 'none';
-});
-
-// Confirm remove
-document.getElementById('btnConfirmBulkRemove').addEventListener('click', async () => {
-  const mode = document.getElementById('rm_mode').value;
-  const rmStart = document.getElementById('rm_start').value;
-  const rmEnd   = document.getElementById('rm_end').value;
-
-  let targets = [];
-
-  if (mode === 'all') {
-    // ALL entries
-    targets = [...State.entries];
-  } else {
-    // Range mode — inclusive of endpoints
-    const inRange = (dateStr) => {
-      if (!dateStr) return false;
-      const d = new Date(dateStr);
-      if (rmStart && d < new Date(rmStart)) return false;
-      if (rmEnd && d > new Date(rmEnd)) return false;
-      return true;
-    };
-    targets = State.entries.filter(e => inRange(e.date));
-  }
-
-  if (!targets.length) {
-    alert('No entries match the selected criteria.');
-    return;
-  }
-
-  const label = (mode === 'all')
-    ? 'ALL entries'
-    : `entries from ${rmStart || 'beginning'} to ${rmEnd || 'now'}`;
-
-  if (!confirm(`This will permanently delete ${targets.length} ${label}.\n\nAre you sure?`)) {
-    return;
-  }
-
-  try {
-    // Delete one by one via existing DB API
-    for (const en of targets) {
-      if (en && typeof en.id !== 'undefined') {
-        await DB.deleteEntry(en.id);
-      }
-    }
-    UI.closeBulkRemove();
-    // Re-load from DB and refresh UI
-    await Actions.refreshAll();
-    alert(`Deleted ${targets.length} ${label}.`);
-  } catch (err) {
-    console.error(err);
-    alert('Failed to remove entries. See console for details.');
-  }
-});
-
 
   <!-- Threshold Editor Modal -->
   <div class="modal-backdrop" id="thModal">
@@ -414,8 +348,8 @@ document.getElementById('btnConfirmBulkRemove').addEventListener('click', async 
       </div>
     </div>
   </div>
-  
-  <!-- Bulk Remove Entries Modal -->
+
+<!-- Bulk Remove Entries Modal -->
 <div class="modal-backdrop" id="bulkRemoveModal">
   <div class="modal">
     <div class="modal-header">
@@ -453,6 +387,7 @@ document.getElementById('btnConfirmBulkRemove').addEventListener('click', async 
     </div>
   </div>
 </div>
+
 
   <script>
   'use strict';
@@ -727,6 +662,22 @@ document.getElementById('btnConfirmBulkRemove').addEventListener('click', async 
   };
 
   /* ==================== UI ==================== */
+  <script>
+// … inside UI = { … }:
+openBulkRemove(){
+  // default mode = range; show the range controls unless user selects "all"
+  document.getElementById('rm_mode').value = 'range';
+  document.getElementById('rm_range_wrap').style.display = '';
+  document.getElementById('rm_start').value = '';
+  document.getElementById('rm_end').value = '';
+  document.getElementById('bulkRemoveModal').classList.add('show');
+},
+closeBulkRemove(){
+  document.getElementById('bulkRemoveModal').classList.remove('show');
+},
+</script>
+
+  
   const UI = {
     initChartMetricSelector(){
       const sel=document.getElementById('chartMetrics'); sel.innerHTML='';
@@ -811,20 +762,6 @@ document.getElementById('btnConfirmBulkRemove').addEventListener('click', async 
       const bmi=U.bmi(latest.weightLbs,latest.heightIn); if(bmi!=null) assess('bmi',bmi,'BMI');
       const whtr=U.whtr(latest.waistIn,latest.heightIn); if(whtr!=null) assess('whtr',whtr,'WHtR');
     },
-	
-	
-// … inside UI = { … }:
-openBulkRemove(){
-  // default mode = range; show the range controls unless user selects "all"
-  document.getElementById('rm_mode').value = 'range';
-  document.getElementById('rm_range_wrap').style.display = '';
-  document.getElementById('rm_start').value = '';
-  document.getElementById('rm_end').value = '';
-  document.getElementById('bulkRemoveModal').classList.add('show');
-},
-closeBulkRemove(){
-  document.getElementById('bulkRemoveModal').classList.remove('show');
-},
 
     chart:null,
     refreshChart(){
@@ -1260,6 +1197,77 @@ updateCollapseButton();
   };
 
   /* ==================== Events ==================== */
+  
+  <script>
+// === New: “Select Fields” extra actions ===
+document.getElementById('btnQuickAdd').addEventListener('click', () => {
+  UI.openEntry(null); // reuse existing Add Entry flow
+});
+
+document.getElementById('btnBulkDelete').addEventListener('click', () => {
+  UI.openBulkRemove();
+});
+
+// Mode toggle inside bulk remove modal
+document.getElementById('rm_mode').addEventListener('change', (e) => {
+  const wrap = document.getElementById('rm_range_wrap');
+  wrap.style.display = (e.target.value === 'range') ? '' : 'none';
+});
+
+// Confirm remove
+document.getElementById('btnConfirmBulkRemove').addEventListener('click', async () => {
+  const mode = document.getElementById('rm_mode').value;
+  const rmStart = document.getElementById('rm_start').value;
+  const rmEnd   = document.getElementById('rm_end').value;
+
+  let targets = [];
+
+  if (mode === 'all') {
+    // ALL entries
+    targets = [...State.entries];
+  } else {
+    // Range mode — inclusive of endpoints
+    const inRange = (dateStr) => {
+      if (!dateStr) return false;
+      const d = new Date(dateStr);
+      if (rmStart && d < new Date(rmStart)) return false;
+      if (rmEnd && d > new Date(rmEnd)) return false;
+      return true;
+    };
+    targets = State.entries.filter(e => inRange(e.date));
+  }
+
+  if (!targets.length) {
+    alert('No entries match the selected criteria.');
+    return;
+  }
+
+  const label = (mode === 'all')
+    ? 'ALL entries'
+    : `entries from ${rmStart || 'beginning'} to ${rmEnd || 'now'}`;
+
+  if (!confirm(`This will permanently delete ${targets.length} ${label}.\n\nAre you sure?`)) {
+    return;
+  }
+
+  try {
+    // Delete one by one via existing DB API
+    for (const en of targets) {
+      if (en && typeof en.id !== 'undefined') {
+        await DB.deleteEntry(en.id);
+      }
+    }
+    UI.closeBulkRemove();
+    // Re-load from DB and refresh UI
+    await Actions.refreshAll();
+    alert(`Deleted ${targets.length} ${label}.`);
+  } catch (err) {
+    console.error(err);
+    alert('Failed to remove entries. See console for details.');
+  }
+});
+</script>
+  
   document.getElementById('btnAdd').addEventListener('click', ()=> UI.openEntry(null));
   document.getElementById('btnFields').addEventListener('click', ()=> UI.openFields());
   document.getElementById('btnThresholds').addEventListener('click', ()=> UI.openThresholds());
