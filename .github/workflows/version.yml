@@ -1,0 +1,29 @@
+name: Generate Version
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate version.json
+        run: |
+          VERSION="1.0.$GITHUB_RUN_NUMBER"
+          echo "{
+            \"version\": \"$VERSION\",
+            \"build\": \"$GITHUB_RUN_NUMBER\",
+            \"commit\": \"${GITHUB_SHA::7}\",
+            \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+          }" > version.json
+
+      - name: Commit version.json
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add version.json
+          git commit -m \"Update version.json\"
+          git push
