@@ -6,13 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0b1220" />
 
-  <!-- PWA Manifest -->
-  <link rel="manifest" href="./manifest.webmanifest" />
+  <!-- PWA Manifest & Icon -->
+  ./manifest.webmanifest
+  ./icons/icon-192.png
 
   <!-- Libraries -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js</script>
+  https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js</script>
+  https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js</script>
 
   <style>
     :root{
@@ -214,7 +215,6 @@
           <button id="btnCollapseChart" class="btn" title="Collapse or expand chart area">Collapse</button>
         </div>
       </div>
-      <!-- Panel we hide/show when collapsing -->
       <div id="chartPanel" style="height:320px">
         <canvas id="metricsChart"></canvas>
       </div>
@@ -906,25 +906,33 @@
     closeFields(){ document.getElementById('fieldsModal')?.classList.remove('show'); },
 
     openThresholds(){
-      document.getElementById('thModal')?.classList.add('show');
-      const host=document.getElementById('thEditor'); if(!host) return; host.innerHTML='';
-      function box(title, html){
-        const d=document.createElement('div'); d.className='card'; d.style.marginBottom='10px';
-        d.innerHTML=`<h2>${title}</h2>${html}`; host.appendChild(d);
-      }
+      const modal = document.getElementById('thModal');
+      if (modal) modal.classList.add('show');
+      const host=document.getElementById('thEditor'); if(!host) return;
+      host.innerHTML='';
+
       const keys=['glucose','sys','dia','spo2','hr','tempF','stress','bodyBattery','lungFluidCc','resp','sleep','steps','pain','bmi','whtr'];
-      keys.forEach(k=>{
+
+      let html='';
+      for (const k of keys) {
         const th=State.thresholds[k]||{warnLow:'',bandLow:'',bandHigh:'',warnHigh:''};
         const title=(METRICS.find(m=>m.key===k)?.label)||k.toUpperCase();
-        box(title,`
-          <div class="row">
-            <div><label>Warn Low</label><input type="number" id="t_${k}_warnLow" value="${th.warnLow}"></div>
-            <div><label>Band Low</label><input type="number" id="t_${k}_bandLow" value="${th.bandLow}"></div>
-            <div><label>Band High</label><input type="number" id="t_${k}_bandHigh" value="${th.bandHigh}"></div>
-            <div><label>Warn High</label><input type="number" id="t_${k}_warnHigh" value="${th.warnHigh}"></div>
+        html += `
+          <div class="card" style="margin-bottom:10px">
+            <h2>${title}</h2>
+            <div class="row">
+              <div><label>Warn Low</label><input type="number" id="t_${k}_warnLow" value="${th.warnLow}"></div>
+              <div><label>Band Low</label><input type="number" id="t_${k}_bandLow" value="${th.bandLow}"></div>
+              <div><label>Band High</label><input type="number" id="t_${k}_bandHigh" value="${th.bandHigh}"></div>
+              <div><label>Warn High</label><input type="number" id="t_${k}_warnHigh" value="${th.warnHigh}"></div>
+            </div>
           </div>
-        `);
-      });
+        `;
+      }
+      host.innerHTML = html;
+
+      // (Re)bind Save button after rebuilding the modal
+      bindSaveThresholds();
     },
     closeThresholds(){ document.getElementById('thModal')?.classList.remove('show'); },
 
@@ -936,18 +944,6 @@
     },
     closeOptions(){ document.getElementById('optModal')?.classList.remove('show'); },
 
-    renderMedsBuffer(){
-      const host=document.getElementById('medList'); if(!host) return; host.innerHTML='';
-      State.medsBuffer.forEach((m,idx)=>{
-        const chip=document.createElement('div'); chip.className='chip';
-        chip.textContent=`${m.name} ${m.dose}${m.units?(' '+m.units):''}`;
-        const btn=document.createElement('button'); btn.className='btn danger'; btn.style.padding='2px 6px'; btn.style.marginLeft='6px'; btn.textContent='x';
-        btn.onclick=()=>{ State.medsBuffer.splice(idx,1); UI.renderMedsBuffer(); };
-        chip.appendChild(btn); host.appendChild(chip);
-      });
-    },
-
-    // Bulk remove modal helpers
     openBulkRemove(){
       const wrap=document.getElementById('rm_range_wrap'); if (wrap) wrap.style.display = '';
       const ms=document.getElementById('rm_mode'); if (ms) ms.value='range';
@@ -957,6 +953,17 @@
     },
     closeBulkRemove(){
       document.getElementById('bulkRemoveModal')?.classList.remove('show');
+    },
+
+    renderMedsBuffer(){
+      const host=document.getElementById('medList'); if(!host) return; host.innerHTML='';
+      State.medsBuffer.forEach((m,idx)=>{
+        const chip=document.createElement('div'); chip.className='chip';
+        chip.textContent=`${m.name} ${m.dose}${m.units?(' '+m.units):''}`;
+        const btn=document.createElement('button'); btn.className='btn danger'; btn.style.padding='2px 6px'; btn.style.marginLeft='6px'; btn.textContent='x';
+        btn.onclick=()=>{ State.medsBuffer.splice(idx,1); UI.renderMedsBuffer(); };
+        chip.appendChild(btn); host.appendChild(chip);
+      });
     }
   };
 
@@ -977,7 +984,6 @@
     if (entriesCard) entriesCard.style.display = showEntriesByVM ? '' : 'none';
     if (chartCard)   chartCard.style.display   = (showChartByVM && showChart) ? '' : 'none';
 
-    // If "chart only" but chart disabled, auto-enable
     if (vm === 'chart' && !showChart) {
       State.ui.chartEnabled = true;
       const toggle = document.getElementById('toggleChart');
@@ -1068,16 +1074,67 @@
     async deleteEntry(id){ await DB.deleteEntry(id); },
     async refreshAll(){ State.entries=await DB.getAllEntries(); UI.buildTable(); UI.refreshKPIs(); UI.refreshChart(); },
     async saveFields(){ await DB.putConfig('fieldsVisible', Array.from(State.fieldsVisible)); UI.closeFields(); UI.buildTable(); },
+
+    // Resilient thresholds save
     async saveThresholds(){
-      const keys=Object.keys(State.thresholds); const merged={...State.thresholds};
-      for(const k of keys){
-        const pick=n=>Number(document.getElementById(`t_${k}_${n}`).value);
-        const wl=pick('warnLow'), bl=pick('bandLow'), bh=pick('bandHigh'), wh=pick('warnHigh');
-        if([wl,bl,bh,wh].every(v=>!isNaN(v))) merged[k]={warnLow:wl,bandLow:bl,bandHigh:bh,warnHigh:wh};
+      try {
+        const existing = State.thresholds || {};
+        const merged = { ...existing };
+        const editKeys = ['glucose','sys','dia','spo2','hr','tempF','stress','bodyBattery','lungFluidCc','resp','sleep','steps','pain','bmi','whtr'];
+
+        const getNum = (id) => {
+          const el = document.getElementById(id);
+          if (!el) return null;
+          const s = (el.value ?? '').trim();
+          if (s === '') return null;
+          const v = Number(s);
+          return Number.isFinite(v) ? v : null;
+        };
+
+        let changedCount = 0;
+
+        for (const k of editKeys) {
+          const wl = getNum(`t_${k}_warnLow`);
+          const bl = getNum(`t_${k}_bandLow`);
+          const bh = getNum(`t_${k}_bandHigh`);
+          const wh = getNum(`t_${k}_warnHigh`);
+
+          if (wl === null && bl === null && bh === null && wh === null) continue;
+
+          const cur = merged[k] || { warnLow:null, bandLow:null, bandHigh:null, warnHigh:null };
+          const next = {
+            warnLow:  wl !== null ? wl : cur.warnLow,
+            bandLow:  bl !== null ? bl : cur.bandLow,
+            bandHigh: bh !== null ? bh : cur.bandHigh,
+            warnHigh: wh !== null ? wh : cur.warnHigh
+          };
+
+          if (next.bandLow != null && next.bandHigh != null && next.bandLow > next.bandHigh) {
+            const tmp = next.bandLow; next.bandLow = next.bandHigh; next.bandHigh = tmp;
+          }
+
+          merged[k] = next;
+          changedCount++;
+        }
+
+        if (changedCount > 0) {
+          State.thresholds = merged;
+          await DB.putConfig('thresholds', merged);
+        }
+
+        UI.closeThresholds?.();
+        UI.refreshKPIs?.();
+        UI.refreshChart?.();
+
+        if (changedCount === 0) {
+          alert('No threshold values changed.');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Failed to save thresholds. See console for details.');
       }
-      State.thresholds=merged; await DB.putConfig('thresholds',merged);
-      UI.closeThresholds(); UI.refreshKPIs(); UI.refreshChart();
     },
+
     async saveOptions(){
       State.options={
         autosave: document.getElementById('optAutosave').value,
@@ -1212,7 +1269,7 @@
         cols.forEach(col=>{
           const lbl = labelOf(col);
           doc.text(shortLabel(lbl, colW), x+cellPadX, y+10);
-        x+=colW;
+          x+=colW;
         });
         doc.setDrawColor(160); doc.setLineWidth(0.5);
         doc.line(margin,y+headerH,margin+contentW,y+headerH);
@@ -1251,125 +1308,25 @@
     }
   };
 
-  /* ==================== Events ==================== */
+  /* ==================== Event Wiring ==================== */
+
+  // Helper: (re)bind Save Thresholds safely
+  function bindSaveThresholds() {
+    const btn = document.getElementById('btnSaveThresholds');
+    if (btn && !btn._bound) {
+      btn.addEventListener('click', Actions.saveThresholds);
+      btn._bound = true;
+    }
+  }
+
+  // Core buttons
   document.getElementById('btnAdd')?.addEventListener('click', () => UI.openEntry(null));
   document.getElementById('btnFields')?.addEventListener('click', () => UI.openFields());
   document.getElementById('btnThresholds')?.addEventListener('click', () => UI.openThresholds());
   document.getElementById('btnOptions')?.addEventListener('click', () => UI.openOptions());
   document.getElementById('btnSaveFields')?.addEventListener('click', Actions.saveFields);
-  document.getElementById('btnSaveThresholds')?.addEventListener('click', Actions.saveThresholds);
+  bindSaveThresholds(); // in case modal is already present
   document.getElementById('btnSaveOptions')?.addEventListener('click', Actions.saveOptions);
-  
-  
-  <script>
-// Reusable safe binder for Save Thresholds
-function bindSaveThresholds() {
-  const btn = document.getElementById('btnSaveThresholds');
-  if (btn && !btn._bound) {
-    btn.addEventListener('click', Actions.saveThresholds);
-    btn._bound = true; // mark as bound once
-  }
-}
-
-// Call once at startup
-bindSaveThresholds();
-</script>
-
-<script>
-Actions.saveThresholds = async function saveThresholds(){
-  try {
-    const existing = State.thresholds || {};
-    const merged = { ...existing };
-
-    // The metrics we render inputs for in the editor:
-    const editKeys = ['glucose','sys','dia','spo2','hr','tempF','stress','bodyBattery','lungFluidCc','resp','sleep','steps','pain','bmi','whtr'];
-
-    const getNum = (id) => {
-      const el = document.getElementById(id);
-      if (!el) return null;
-      const s = (el.value ?? '').trim();
-      if (s === '') return null;           // treat blank as "no change"
-      const v = Number(s);
-      return Number.isFinite(v) ? v : null;
-    };
-
-    let changedCount = 0;
-
-    for (const k of editKeys) {
-      const wl = getNum(`t_${k}_warnLow`);
-      const bl = getNum(`t_${k}_bandLow`);
-      const bh = getNum(`t_${k}_bandHigh`);
-      const wh = getNum(`t_${k}_warnHigh`);
-
-      // If none provided, skip this metric (leave existing threshold as-is)
-      if (wl === null && bl === null && bh === null && wh === null) continue;
-
-      const cur = merged[k] || { warnLow:null, bandLow:null, bandHigh:null, warnHigh:null };
-      const next = {
-        warnLow:  wl !== null ? wl : cur.warnLow,
-        bandLow:  bl !== null ? bl : cur.bandLow,
-        bandHigh: bh !== null ? bh : cur.bandHigh,
-        warnHigh: wh !== null ? wh : cur.warnHigh
-      };
-
-      // Optional: sanity — ensure bandLow <= bandHigh if both provided
-      if (next.bandLow != null && next.bandHigh != null && next.bandLow > next.bandHigh) {
-        // swap to keep ordering sane
-        const tmp = next.bandLow; next.bandLow = next.bandHigh; next.bandHigh = tmp;
-      }
-
-      merged[k] = next;
-      changedCount++;
-    }
-
-    // Persist if anything changed
-    if (changedCount > 0) {
-      State.thresholds = merged;
-      await DB.putConfig('thresholds', merged);
-    }
-
-    UI.closeThresholds?.();
-    UI.refreshKPIs?.();
-    UI.refreshChart?.();
-
-    if (changedCount === 0) {
-      alert('No threshold values changed.');
-    }
-  } catch (err) {
-    console.error(err);
-    alert('Failed to save thresholds. See console for details.');
-  }
-};
-</script>
-
-  
-
-UI.openThresholds = function(){
-  document.getElementById('thModal')?.classList.add('show');
-  const host=document.getElementById('thEditor'); if(!host) return; host.innerHTML='';
-
-  function box(title, html){
-    const d=document.createElement('div'); d.className='card'; d.style.marginBottom='10px';
-    d.innerHTML=`<h2>${title}</h2>${html}`; host.appendChild(d);
-  }
-
-  const keys=['glucose','sys','dia','spo2','hr','tempF','stress','bodyBattery','lungFluidCc','resp','sleep','steps','pain','bmi','whtr'];
-  keys.forEach(k=>{
-    const th=State.thresholds[k]||{warnLow:'',bandLow:'',bandHigh:'',warnHigh:''};
-    const title=(METRICS.find(m=>m.key===k)?.label)||k.toUpperCase();
-    box(title,`
-      <div class="row">
-        <div><label>Warn Low</label><input type="number" id="t_${k}_warnLow" value="${th.warnLow}"></div>
-        <div><label>Band Low</label><input type="number" id="t_${k}_bandLow" value="${th.bandLow}"></div>
-        <div><label>Band High</label><input type="number" id="t_${k}_bandHigh" value="${th.bandHigh}"></div>
-        <div><label>Warn High</label><input type="number" id="t_${k}_warnHigh" value="${th.warnHigh}"></div>
-      </div>
-    `);
-  });
-
-  // ✅ Ensure the Save button is (re)bound even after the modal is rebuilt
-  bindSaveThresholds();
-}
 
   document.getElementById('btnSaveEntry')?.addEventListener('click', async ()=>{
     await Actions.saveEntryFromForm(); await Actions.refreshAll();
@@ -1385,6 +1342,7 @@ UI.openThresholds = function(){
   document.getElementById('btnSaveCSV')?.addEventListener('click', Actions.exportCSV);
   document.getElementById('btnSavePDF')?.addEventListener('click', Actions.exportPDF);
 
+  // Medicines chip add
   document.getElementById('btnAddMed')?.addEventListener('click', ()=>{
     const name=document.getElementById('med_name').value.trim();
     const dose=document.getElementById('med_dose').value.trim();
@@ -1401,7 +1359,7 @@ UI.openThresholds = function(){
   document.getElementById('chartMetrics')?.addEventListener('change', () => UI.refreshChart());
   document.getElementById('axisMode')?.addEventListener('change', () => UI.refreshChart());
   document.getElementById('filterStart')?.addEventListener('change', () => { UI.buildTable(); UI.refreshChart(); });
-  document.getElementById('filterEnd')?.addEventListener('change',   () => { UI.buildTable(); UI.refreshChart(); });
+  document.getElementById('filterEnd')  ?.addEventListener('change', () => { UI.buildTable(); UI.refreshChart(); });
 
   // Chart toggle (persist) — respects viewMode
   document.getElementById('toggleChart')?.addEventListener('change', async (e)=>{
@@ -1423,24 +1381,18 @@ UI.openThresholds = function(){
     UI.refreshChart();
   });
 
-  // === “Select Fields” extra actions (guarded) ===
+  // “Select Fields” extra actions (guarded)
   const elQuickAdd = document.getElementById('btnQuickAdd');
-  if (elQuickAdd) {
-    elQuickAdd.addEventListener('click', () => UI.openEntry(null));
-  }
+  if (elQuickAdd) elQuickAdd.addEventListener('click', () => UI.openEntry(null));
 
   const elBulkDelete = document.getElementById('btnBulkDelete');
-  if (elBulkDelete) {
-    elBulkDelete.addEventListener('click', () => UI.openBulkRemove());
-  }
+  if (elBulkDelete) elBulkDelete.addEventListener('click', () => UI.openBulkRemove());
 
   const elRmMode = document.getElementById('rm_mode');
-  if (elRmMode) {
-    elRmMode.addEventListener('change', (e) => {
-      const wrap = document.getElementById('rm_range_wrap');
-      if (wrap) wrap.style.display = (e.target.value === 'range') ? '' : 'none';
-    });
-  }
+  if (elRmMode) elRmMode.addEventListener('change', (e) => {
+    const wrap = document.getElementById('rm_range_wrap');
+    if (wrap) wrap.style.display = (e.target.value === 'range') ? '' : 'none';
+  });
 
   const elConfirmRemove = document.getElementById('btnConfirmBulkRemove');
   if (elConfirmRemove) {
@@ -1464,18 +1416,13 @@ UI.openThresholds = function(){
         targets = State.entries.filter(e => inRange(e.date));
       }
 
-      if (!targets.length) {
-        alert('No entries match the selected criteria.');
-        return;
-      }
+      if (!targets.length) { alert('No entries match the selected criteria.'); return; }
 
       const label = (mode === 'all')
         ? 'ALL entries'
         : `entries from ${rmStart || 'beginning'} to ${rmEnd || 'now'}`;
 
-      if (!confirm(`This will permanently delete ${targets.length} ${label}.\n\nAre you sure?`)) {
-        return;
-      }
+      if (!confirm(`This will permanently delete ${targets.length} ${label}.\n\nAre you sure?`)) return;
 
       try {
         for (const en of targets) {
