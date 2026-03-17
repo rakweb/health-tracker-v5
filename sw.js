@@ -1,6 +1,6 @@
 // Simple offline-first service worker for Health Tracker
 const CACHE_NAME = 'health-tracker-v5';
-const CACHE = 'health-tracker-vX'; // increase this number
+const CACHE = 'health-tracker-v5'; // increase this number
 const CORE_ASSETS = [
   './',
   './index.html',
