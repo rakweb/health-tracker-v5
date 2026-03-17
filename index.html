@@ -5,10 +5,21 @@
   <title>Health Tracker</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0b1220" />
+  
+<!-- PWA Manifest -->
+<link rel="manifest" href="./manifest.webmanifest" />
 
-  <!-- PWA Manifest & Icon -->
-  ./manifest.webmanifest
-  ./icons/icon-192.png
+<!-- Favicon / App Icon (optional but useful) -->
+<link rel="icon" href="./icons/icon-192.png" sizes="192x192" />
+<link rel="apple-touch-icon" href="./icons/icon-192.png" />
+
+<!-- Chart.js and plugins -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js" defer></script>
+
+<!-- jsPDF -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
+
 
   <!-- Libraries -->
   https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js</script>
