@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -14,7 +14,10 @@
   <link rel="icon" href="./icons/icon-192.png" sizes="192x192" />
   <link rel="apple-touch-icon" href="./icons/icon-192.png" />
 
-   <!-- Libraries -->
+  <!-- Styles (if any) -->
+  <!-- <link rel="stylesheet" href="./assets/styles.css" /> -->
+
+  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" defer></script>
@@ -419,29 +422,19 @@
   const installHint = document.getElementById('installHint');
   const appVersionSpan = document.getElementById('appVersion');
   const buildNumberSpan = document.getElementById('buildNumber');
-  const swVersionSpan = document.getElementById('swVersion');
-
+  
   // Load version.json (optional; safe if missing)
-  if (location.protocol.startsWith('http')) {
-    fetch('./version.json', { cache: 'no-store' })
-      .then(r => r.ok ? r.json() : null)
-      .then(v => {
-        if (v) {
-          BUILD.appVersion = v.version || BUILD.appVersion;
-          BUILD.buildNumber = v.build || BUILD.buildNumber;
-          BUILD.commit = v.commit?.slice(0,7) || BUILD.commit;
-          BUILD.timestamp = v.timestamp || BUILD.timestamp;
-        }
-      })
-      .catch(() => {})
-      .finally(() => {
-        appVersionSpan.textContent = BUILD.appVersion;
-        buildNumberSpan.textContent = `${BUILD.buildNumber}`;
-      });
-  } else {
-    appVersionSpan.textContent = BUILD.appVersion;
-    buildNumberSpan.textContent = `${BUILD.buildNumber}`;
-  }
+  
+fetch('./version.json', { cache: 'no-store' })
+  .then(r => r.ok ? r.json() : null)
+  .then(v => {
+    if (!v) return;
+    appVersionSpan.textContent = v.version || '—';
+    buildNumberSpan.textContent = v.build || '—';
+  })
+  .catch(() => {
+    appVersionSpan.textContent = '—';
+  });
 
   // Register SW
   if ('serviceWorker' in navigator) {
