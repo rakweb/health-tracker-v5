@@ -1,6 +1,6 @@
 // Simple offline-first service worker for Health Tracker
 const CACHE_NAME = 'health-tracker-v5';
-const CACHE = 'health-tracker-v5'; // increase this number
+const CACHE = 'health-tracker-vX'; // increase this number
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -25,17 +25,16 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-self.addEventListener('fetch', (event) => {
-  const req = event.request;
 
-  // For navigation requests, respond with cached index.html (SPA fallback)
-  if (req.mode === 'navigate') {
-    event.respondWith(
-      fetch(req).catch(() => caches.match('./index.html'))
-    );
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  if (url.pathname.endsWith('/version.json')) {
+    event.respondWith(fetch(event.request));
     return;
   }
-
+});
+``
   // Cache-first for same-origin GET static assets
   if (req.method === 'GET' && new URL(req.url).origin === location.origin) {
     event.respondWith(
