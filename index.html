@@ -183,6 +183,8 @@ DOCTYPE html>
       <button class="btn" id="btnThresholds">Thresholds</button>
       <button class="btn" id="btnSaveCSV">Save CSV</button>
       <button class="btn" id="btnSavePDF">Save PDF</button>
+      <button class="btn" id="btnImportCSV">Import CSV</button>
+      <input type="file" id="importFile" accept=".csv,text/csv" style="display:none" />
       <button class="btn warn" id="btnOptions">Options</button>
     </div>
 
@@ -1351,6 +1353,295 @@ fetch('./version.json', { cache: 'no-store' })
     document.getElementById('med_units').value='';
     UI.renderMedsBuffer();
   });
+
+
+<script>
+// Import CSV: wire button → hidden input
+document.getElementById('btnImportCSV')?.addEventListener('click', () => {
+  document.getElementById('importFile')?.click();
+});
+
+// When a file is selected, run import
+document.getElementById('importFile')?.addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  await Actions.importCSVFromFile(file);
+  // reset file input so the same file can be selected again if needed
+  e.target.value = '';
+});
+</script>
+
+
+
+<script>
+/* ==================== CSV Import Helpers ==================== */
+
+// Minimal robust CSV parser: handles quoted fields, escaped quotes, commas, CRLF
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let cur = '';
+  let i = 0, inQuotes = false;
+
+  while (i < text.length) {
+    const ch = text[i];
+
+    if (inQuotes) {
+      if (ch === '"') {
+        if (i + 1 < text.length && text[i + 1] === '"') {
+          cur += '"'; // escaped quote ""
+          i += 2;
+          continue;
+        } else {
+          inQuotes = false;
+          i++;
+          continue;
+        }
+      } else {
+        cur += ch;
+        i++;
+        continue;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+        i++;
+        continue;
+      }
+      if (ch === ',') {
+        row.push(cur);
+        cur = '';
+        i++;
+        continue;
+      }
+      if (ch === '\n') {
+        row.push(cur);
+        rows.push(row);
+        row = [];
+        cur = '';
+        i++;
+        continue;
+      }
+      if (ch === '\r') {
+        // Normalize CRLF → single row end
+        // If next is \n, skip it here and push row on \n branch or force push now
+        // We will handle as newline by pushing on \r as well
+        // Push like newline but do not double-push on subsequent \n
+        // Implement simple: treat \r as newline; subsequent \n will produce empty row; guard it later
+        row.push(cur);
+        rows.push(row);
+        row = [];
+        cur = '';
+        i++;
+        // Skip next \n if present
+        if (i < text.length && text[i] === '\n') i++;
+        continue;
+      }
+      cur += ch;
+      i++;
+    }
+  }
+  // last cell
+  row.push(cur);
+  rows.push(row);
+
+  // Trim potential trailing empty line
+  if (rows.length && rows[rows.length - 1].length === 1 && rows[rows.length - 1][0] === '') {
+    rows.pop();
+  }
+  return rows;
+}
+
+// Normalize varied header names to your schema keys
+function normalizeHeader(h) {
+  if (!h) return '';
+  const s = String(h).trim().toLowerCase().replace(/\s+/g, '');
+  const map = {
+    'date': 'date',
+    'time': 'time',
+    'glucose(mg/dl)': 'glucose', 'glucose': 'glucose',
+    'bodybattery': 'bodyBattery',
+    'stress': 'stress',
+    'weight(lbs)': 'weightLbs', 'weightlbs': 'weightLbs', 'weight': 'weightLbs',
+    'height(in)': 'heightIn', 'heightin': 'heightIn', 'height': 'heightIn',
+    'waist(in)': 'waistIn', 'waistin': 'waistIn', 'waist': 'waistIn',
+    'temperature(°f)': 'tempF', 'temperature(f)': 'tempF', 'tempf': 'tempF', 'temperature': 'tempF', 'temp': 'tempF',
+    'lungfluid(cc)': 'lungFluidCc', 'lungfluidcc': 'lungFluidCc', 'lungfluid': 'lungFluidCc',
+    'systolic(mmhg)': 'sys', 'systolic': 'sys', 'sys': 'sys',
+    'diastolic(mmhg)': 'dia', 'diastolic': 'dia', 'dia': 'dia',
+    'spox(%)': 'spo2', 'spo2(%)': 'spo2', 'spo2': 'spo2',
+    'heartrate(bpm)': 'hr', 'heartrate': 'hr', 'hr': 'hr', 'pulse': 'hr',
+    'respiration(br/min)': 'resp', 'respiration': 'resp', 'resp': 'resp',
+    'sleep(hrs)': 'sleep', 'sleephrs': 'sleep', 'sleep': 'sleep',
+    'steps': 'steps',
+    'pain(0-10)': 'pain', 'pain': 'pain',
+    'emotions': 'emotions', 'mood': 'emotions',
+    'comments': 'comments', 'notes': 'comments',
+    'medicines': 'meds', 'meds': 'meds'
+  };
+  return map[s] || s; // fallback to raw (user can have exact keys)
+}
+
+function coerceNumber(v) {
+  if (v == null) return null;
+  const s = String(v).trim();
+  if (s === '') return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
+// Convert one CSV row → entry object compatible with your app
+function toEntry(row, headerIndex) {
+  // Start with all null/blank defaults
+  const e = {
+    date: null, time: null,
+    glucose: null, bodyBattery: null, stress: null,
+    weightLbs: null, heightIn: null, waistIn: null,
+    tempF: null, lungFluidCc: null, sys: null, dia: null,
+    spo2: null, hr: null, resp: null, sleep: null, steps: null,
+    pain: null, emotions: '', comments: '',
+    meds: []
+  };
+
+  // Date / time (support combined "datetime" column too)
+  const dateIdx = headerIndex['date'];
+  const timeIdx = headerIndex['time'];
+  const dtIdx   = headerIndex['datetime']; // optional
+
+  if (dtIdx != null) {
+    // Try to split "YYYY-MM-DD HH:mm" or ISO; fallback to Date parse
+    const raw = row[dtIdx]?.trim();
+    if (raw) {
+      // crude split: try space, 'T', or comma
+      let dPart = raw, tPart = '';
+      if (raw.includes('T')) {
+        [dPart, tPart] = raw.split('T');
+      } else if (raw.includes(' ')) {
+        const lastSpace = raw.lastIndexOf(' ');
+        dPart = raw.slice(0, lastSpace);
+        tPart = raw.slice(lastSpace + 1);
+      }
+      // normalize
+      const d = new Date(raw);
+      if (!isNaN(d.getTime())) {
+        e.date = d.toISOString().slice(0,10);
+        e.time = raw.includes('T') || raw.includes(':') ? String(tPart).slice(0,5) : '';
+      } else {
+        // fallback: try simple YYYY-MM-DD in dPart
+        const m = String(dPart).trim();
+        e.date = /^\d{4}-\d{2}-\d{2}$/.test(m) ? m : null;
+        const tt = String(tPart).trim();
+        e.time = /^\d{2}:\d{2}/.test(tt) ? tt.slice(0,5) : null;
+      }
+    }
+  }
+  if (!e.date && dateIdx != null) e.date = String(row[dateIdx] || '').trim() || null;
+  if (!e.time && timeIdx != null) e.time = String(row[timeIdx] || '').trim() || null;
+
+  // Numerics
+  const numericMap = {
+    glucose: 'glucose',
+    bodyBattery: 'bodyBattery',
+    stress: 'stress',
+    weightLbs: 'weightLbs',
+    heightIn: 'heightIn',
+    waistIn: 'waistIn',
+    tempF: 'tempF',
+    lungFluidCc: 'lungFluidCc',
+    sys: 'sys',
+    dia: 'dia',
+    spo2: 'spo2',
+    hr: 'hr',
+    resp: 'resp',
+    sleep: 'sleep',
+    steps: 'steps',
+    pain: 'pain'
+  };
+  for (const [key, target] of Object.entries(numericMap)) {
+    const idx = headerIndex[target] ?? headerIndex[key];
+    if (idx != null) e[target] = coerceNumber(row[idx]);
+  }
+
+  // Text
+  if (headerIndex['emotions'] != null) e.emotions = String(row[headerIndex['emotions']] ?? '').trim();
+  if (headerIndex['comments'] != null) e.comments = String(row[headerIndex['comments']] ?? '').trim();
+
+  // Medicines (accept either structured split or raw)
+  // If CSV has a "meds" column, allow formats:
+  //  "Furosemide 20 mg; Metoprolol 50 mg" OR JSON-like list
+  if (headerIndex['meds'] != null) {
+    const raw = String(row[headerIndex['meds']] ?? '').trim();
+    if (raw) {
+      // Try split by ';'
+      const parts = raw.split(';').map(s => s.trim()).filter(Boolean);
+      const meds = [];
+      for (const p of parts) {
+        // naive extraction: <name> <dose> <units?>
+        const m = p.match(/^(.+?)\s+([\d.]+)\s*([a-zA-Z]+)?$/);
+        if (m) {
+          meds.push({ name: m[1], dose: m[2], units: m[3] || '' });
+        } else {
+          // fallback: store whole string as name
+          meds.push({ name: p, dose: '', units: '' });
+        }
+      }
+      e.meds = meds;
+    }
+  }
+
+  // Ensure date is present (your app requires date)
+  if (!e.date) return null;
+  return e;
+}
+
+Actions.importCSVFromFile = async function importCSVFromFile(file) {
+  try {
+    if (!file) return;
+    const text = await file.text();
+    if (!text || !text.trim()) {
+      alert('Selected CSV is empty.');
+      return;
+    }
+    const rows = parseCSV(text);
+    if (!rows.length) {
+      alert('No rows found in CSV.');
+      return;
+    }
+
+    // First row = headers
+    const headersRaw = rows[0];
+    const headerIndex = {};
+    headersRaw.forEach((h, i) => {
+      const key = normalizeHeader(h);
+      if (key) headerIndex[key] = i;
+    });
+
+    // Validate: require at least a date column
+    if (headerIndex['date'] == null && headerIndex['datetime'] == null) {
+      alert('CSV must include a "date" or "datetime" column.');
+      return;
+    }
+
+    // Import rows
+    let imported = 0, skipped = 0;
+    for (let r = 1; r < rows.length; r++) {
+      const entry = toEntry(rows[r], headerIndex);
+      if (!entry) { skipped++; continue; }
+      await DB.putEntry(entry);
+      imported++;
+    }
+
+    // Refresh UI
+    await Actions.refreshAll();
+
+    alert(`Import complete.\nImported: ${imported}\nSkipped: ${skipped}`);
+  } catch (err) {
+    console.error(err);
+    alert('Import failed. See console for details.');
+  }
+};
+</script>
+
 
   // Filters & chart controls
   document.getElementById('chartMetrics')?.addEventListener('change', () => UI.refreshChart());
