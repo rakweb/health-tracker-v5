@@ -268,7 +268,7 @@
           <select id="f_emotions">
             <option value="">—</option>
             <option>Happy</option><option>Calm</option><option>Neutral</option>
-            <option>Anxious</option><option>Sad</option><option>Stressed</option><option>Fatigued</option><option>Emotional</option>
+            <option>Anxious</option><option>Sad</option><option>Stressed</option><option>Fatigued</option>
           </select>
         </div>
         <div style="grid-column:1/-1">
@@ -430,7 +430,6 @@
     })
     .catch(() => { appVersionSpan.textContent = '—'; });
 
-  // Register SW (actual registration waits for window 'load' at bottom)
   function registerSW() {
     if (!('serviceWorker' in navigator)) return;
     navigator.serviceWorker.register('./sw.js')
@@ -441,7 +440,6 @@
           if (evt.data?.type === 'VERSION' && evt.data?.cache) swVersionSpan.textContent = evt.data.cache;
         });
         (reg.active ? Promise.resolve() : navigator.serviceWorker.ready).then(sendGetVersion);
-
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing; if (!nw) return;
           nw.addEventListener('statechange', () => {
@@ -622,7 +620,7 @@
     }
   };
 
-  /* ==================== State & Utils ==================== */
+  /* ==================== State & ISO Date/Time Utils ==================== */
   const State = {
     entries: [],
     fieldsVisible: new Set(DEFAULT_FIELDS_VISIBLE),
@@ -633,14 +631,45 @@
     medsBuffer: [],
   };
 
+  // Canonical ISO helpers
   const U = {
-    toISODate(d){ return d?.toISOString?.().slice(0,10); },
-    parseDateTime(dateStr,timeStr){ if(!dateStr) return null; const t = (timeStr && timeStr.length)?timeStr:'00:00'; return new Date(`${dateStr}T${t}`); },
+    toISODate(d){
+      if (!d) return null;
+      const dt = (d instanceof Date) ? d : new Date(d);
+      return isNaN(dt.getTime()) ? null : dt.toISOString().slice(0,10);
+    },
+    normalizeDateString(s){
+      if (!s) return null;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? null : d.toISOString().slice(0,10);
+    },
+    normalizeTimeString(s){
+      if (!s) return null;
+      const m = String(s).trim().match(/^(\d{2}):(\d{2})(?::\d{2})?$/);
+      if (m) return `${m[1]}:${m[2]}`;
+      const probe = new Date(`1970-01-01T${s}`);
+      return isNaN(probe.getTime()) ? null : probe.toISOString().slice(11,16);
+    },
+    parseDateTime(isoDate, timeHHmm){
+      if (!isoDate) return null;
+      const date = U.normalizeDateString(isoDate);
+      const time = U.normalizeTimeString(timeHHmm || '00:00') || '00:00';
+      if (!date) return null;
+      const dt = new Date(`${date}T${time}`); // local time
+      return isNaN(dt.getTime()) ? null : dt;
+    },
     fmt(n,dp=0){ if(n==null||isNaN(n)) return '—'; return Number(n).toFixed(dp); },
     bmi(lbs,inches){ if(!lbs||!inches) return null; return 703*(lbs/(inches*inches)); },
     whtr(waistIn,heightIn){ if(!waistIn||!heightIn) return null; return waistIn/heightIn; },
     csvEscape(v){ if(v==null) return ''; const s=typeof v==='string'?v:JSON.stringify(v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; },
-    dateInRange(dateStr,startStr,endStr){ if(!dateStr) return false; const d=new Date(dateStr); if(startStr&&d<new Date(startStr)) return false; if(endStr&&d>new Date(endStr)) return false; return true; }
+    dateInRange(dateStr,startStr,endStr){
+      if(!dateStr) return false;
+      const d = new Date(dateStr + 'T00:00');
+      if (startStr && d < new Date(startStr + 'T00:00')) return false;
+      if (endStr && d > new Date(endStr + 'T23:59')) return false;
+      return true;
+    }
   };
 
   /* ==================== UI ==================== */
@@ -679,9 +708,17 @@
         const tr=document.createElement('tr');
         for(const k of vis){
           const td=document.createElement('td');
-          let val=en[k];
-          if(k==='meds' && Array.isArray(val)) val = val.map(m=>`${m.name} ${m.dose}${m.units?(' '+m.units):''}`).join('; ');
-          td.textContent=(val==null?'':val);
+          if (k==='date') {
+            // Display ISO date; or use locale if preferred:
+            // const dt = U.parseDateTime(en.date, en.time); td.textContent = dt ? dt.toLocaleDateString() : (en.date||'');
+            td.textContent = en.date || '';
+          } else if (k==='time') {
+            td.textContent = en.time || '';
+          } else {
+            let val=en[k];
+            if(k==='meds' && Array.isArray(val)) val = val.map(m=>`${m.name} ${m.dose}${m.units?(' '+m.units):''}`).join('; ');
+            td.textContent=(val==null?'':val);
+          }
           tr.appendChild(td);
         }
         const tdA=document.createElement('td'); tdA.className='actions';
@@ -751,11 +788,11 @@
         .filter(e=>U.dateInRange(e.date,start,end))
         .sort((a,b)=>((U.parseDateTime(a.date,a.time)?.getTime()||0)-(U.parseDateTime(b.date,b.time)?.getTime()||0)));
 
-      const labels=rows.map(r=>{
-        const d=U.parseDateTime(r.date,r.time); return d?(d.toLocaleDateString()+' '+(r.time||'')):(r.date||'');
-      });
+      const labels=rows.map(r=> r.date + (r.time ? (' ' + r.time) : '') );
 
-      const palette=['#60a5fa','#34d399','#f472b6','#f59e0b','#a78bfa','#38bdf8','#f87171','#22d3ee','#e879f9','#fde047','#fb7185','#93c5fd','#86efac','#c084fc','#fda4af'];
+      const palette=['#60a5fa','#34d399','#f472b6','#f59e0b','#a78bfa','#38bdf8',
+                     '#f87171','#22d3ee','#e879f9','#fde047','#fb7185','#93c5fd',
+                     '#86efac','#c084fc','#fda4af'];
 
       const yAxes={};
       const datasets=metricKeys.map((k,idx)=>{
@@ -896,9 +933,7 @@
       const e=document.getElementById('rm_end');   if (e) e.value='';
       document.getElementById('bulkRemoveModal')?.classList.add('show');
     },
-    closeBulkRemove(){
-      document.getElementById('bulkRemoveModal')?.classList.remove('show');
-    },
+    closeBulkRemove(){ document.getElementById('bulkRemoveModal')?.classList.remove('show'); },
 
     renderMedsBuffer(){
       const host=document.getElementById('medList'); if(!host) return; host.innerHTML='';
@@ -936,17 +971,14 @@
     }
     if ((vm === 'both' || vm === 'chart') && State.ui.chartEnabled) setTimeout(() => UI.refreshChart?.(), 0);
   }
-  function setChartCollapsed(collapsed) {
-    const panel = document.getElementById('chartPanel'); if (!panel) return;
-    panel.style.display = collapsed ? 'none' : '';
-  }
+  function setChartCollapsed(collapsed) { const panel = document.getElementById('chartPanel'); if (!panel) return; panel.style.display = collapsed ? 'none' : ''; }
   function updateCollapseButton() {
     const btn = document.getElementById('btnCollapseChart'); if (!btn) return;
     btn.textContent = State.ui.collapsedChart ? 'Expand' : 'Collapse';
     btn.title = State.ui.collapsedChart ? 'Expand chart area' : 'Collapse chart area';
   }
 
-  /* ==================== CSV Import Helpers ==================== */
+  /* ==================== CSV Import Helpers (ISO normalization) ==================== */
   function parseCSV(text) {
     const rows = []; let row = [], cur = '', i = 0, inQuotes = false;
     while (i < text.length) {
@@ -989,27 +1021,46 @@
     };
     return map[s] || s;
   }
-  function coerceNumber(v) {
-    if (v == null) return null; const s = String(v).trim(); if (s === '') return null;
-    const n = Number(s); return Number.isFinite(n) ? n : null;
-  }
   function csvRowToEntry(row, headerIndex) {
-    const e = { date:null, time:null, glucose:null, bodyBattery:null, stress:null, weightLbs:null, heightIn:null, waistIn:null,
-                tempF:null, lungFluidCc:null, sys:null, dia:null, spo2:null, hr:null, resp:null, sleep:null, steps:null,
-                pain:null, emotions:'', comments:'', meds:[] };
-    const dtIdx = headerIndex['datetime'], dateIdx = headerIndex['date'], timeIdx = headerIndex['time'];
+    const e = {
+      date:null, time:null,
+      glucose:null, bodyBattery:null, stress:null,
+      weightLbs:null, heightIn:null, waistIn:null,
+      tempF:null, lungFluidCc:null, sys:null, dia:null,
+      spo2:null, hr:null, resp:null, sleep:null, steps:null,
+      pain:null, emotions:'', comments:'', meds:[]
+    };
+
+    const dtIdx = headerIndex['datetime'];
+    const dateIdx = headerIndex['date'];
+    const timeIdx = headerIndex['time'];
+
     if (dtIdx != null) {
       const raw = String(row[dtIdx] ?? '').trim();
-      if (raw) { const d = new Date(raw);
-        if (!isNaN(d.getTime())) { e.date = d.toISOString().slice(0,10); const tMatch = raw.match(/(\d{2}:\d{2})/); e.time = tMatch ? tMatch[1] : ''; }
+      if (raw) {
+        const parts = raw.replace('T',' ').split(/\s+/);
+        const d = U.normalizeDateString(parts[0]);
+        const t = U.normalizeTimeString(parts[1] || '00:00') || '00:00';
+        if (d) { e.date = d; e.time = t; }
+        else {
+          const probe = new Date(raw);
+          if (!isNaN(probe.getTime())) { e.date = U.toISODate(probe); e.time = (U.normalizeTimeString(raw.slice(11,16)) || '00:00'); }
+        }
       }
     }
-    if (!e.date && dateIdx != null) e.date = String(row[dateIdx] ?? '').trim() || null;
-    if (!e.time && timeIdx != null) e.time = String(row[timeIdx] ?? '').trim() || null;
+    if (!e.date && dateIdx != null) e.date = U.normalizeDateString(String(row[dateIdx] ?? '').trim());
+    if (!e.time && timeIdx != null) e.time = U.normalizeTimeString(String(row[timeIdx] ?? '').trim()) || '00:00';
+
+    if (!e.date) return null;
 
     const numericKeys = ['glucose','bodyBattery','stress','weightLbs','heightIn','waistIn','tempF','lungFluidCc','sys','dia','spo2','hr','resp','sleep','steps','pain'];
-    for (const k of numericKeys) { const idx = headerIndex[k]; if (idx != null) e[k] = coerceNumber(row[idx]); }
-
+    for (const k of numericKeys) {
+      const idx = headerIndex[k];
+      if (idx != null) {
+        const s = String(row[idx] ?? '').trim();
+        e[k] = (s === '' ? null : (Number.isFinite(Number(s)) ? Number(s) : null));
+      }
+    }
     if (headerIndex['emotions'] != null) e.emotions = String(row[headerIndex['emotions']] ?? '').trim();
     if (headerIndex['comments'] != null) e.comments = String(row[headerIndex['comments']] ?? '').trim();
 
@@ -1023,7 +1074,6 @@
         });
       }
     }
-    if (!e.date) return null;
     return e;
   }
 
@@ -1052,13 +1102,31 @@
 
     async saveEntryFromForm(){
       const isEdit = State.editId != null;
+
+      const rawDate = document.getElementById('f_date').value || '';
+      const rawTime = document.getElementById('f_time').value || '';
+      const normDate = U.normalizeDateString(rawDate);
+      const normTime = U.normalizeTimeString(rawTime) || '00:00';
+      if (!normDate) { alert('Date is required and must be valid (YYYY-MM-DD).'); return; }
+
       const en = {
-        date: document.getElementById('f_date').value || null,
-        time: document.getElementById('f_time').value || null,
-        glucose: num('f_glucose'), bodyBattery: num('f_bodyBattery'), stress: num('f_stress'),
-        weightLbs: num('f_weightLbs'), heightIn: num('f_heightIn'), waistIn: num('f_waistIn'),
-        tempF: num('f_tempF'), lungFluidCc: num('f_lungFluidCc'), sys: num('f_sys'), dia: num('f_dia'),
-        spo2: num('f_spo2'), hr: num('f_hr'), resp: num('f_resp'), sleep: num('f_sleep'), steps: num('f_steps'),
+        date: normDate,
+        time: normTime,
+        glucose: num('f_glucose'),
+        bodyBattery: num('f_bodyBattery'),
+        stress: num('f_stress'),
+        weightLbs: num('f_weightLbs'),
+        heightIn: num('f_heightIn'),
+        waistIn: num('f_waistIn'),
+        tempF: num('f_tempF'),
+        lungFluidCc: num('f_lungFluidCc'),
+        sys: num('f_sys'),
+        dia: num('f_dia'),
+        spo2: num('f_spo2'),
+        hr: num('f_hr'),
+        resp: num('f_resp'),
+        sleep: num('f_sleep'),
+        steps: num('f_steps'),
         pain: num('f_pain'),
         emotions: document.getElementById('f_emotions').value || '',
         comments: document.getElementById('f_comments').value || '',
@@ -1066,7 +1134,7 @@
       };
       if(isEdit) en.id = Number(State.editId);
       function num(id){ const v=document.getElementById(id).value; return v===''?null:Number(v); }
-      if(!en.date){ alert('Date is required.'); return; }
+
       await DB.putEntry(en);
       State.editId = null; UI.closeEntry();
     },
@@ -1172,7 +1240,7 @@
 
         let imported = 0, skipped = 0;
         for (let r = 1; r < rows.length; r++) {
-          const entry = csvRowToEntry(rows[r], headerIndex);
+          const entry = csvRowToEntry(rows[r], headerIndex); // normalized to ISO
           if (!entry) { skipped++; continue; }
           await DB.putEntry(entry);
           imported++;
@@ -1184,7 +1252,6 @@
       }
     },
 
-    // PDF export stays as a function on Actions (uses jsPDF when available)
     exportPDF: async function exportPDF(){
       try{
         if(!window.jspdf){ alert('jsPDF failed to load.'); return; }
@@ -1205,12 +1272,10 @@
 
         const start=document.getElementById('filterStart').value;
         const end  =document.getElementById('filterEnd').value;
-        const parseDT=(d,t)=>{ if(!d) return 0; const T=t&&t.length?t:'00:00'; const X=new Date(`${d}T${T}`); return X.getTime()||0; };
+        const parseDT=(d,t)=>{ const dt=U.parseDateTime(d,t); return dt?dt.getTime():0; };
 
         const all=(State.entries||[])
-          .filter(e=>{ if(!e.date) return false; const D=new Date(e.date);
-                       if(start && D<new Date(start)) return false;
-                       if(end   && D>new Date(end))   return false; return true; })
+          .filter(e=>U.dateInRange(e.date,start,end))
           .sort((a,b)=>parseDT(a.date,a.time) - parseDT(b.date,b.time));
 
         const visible = new Set(State.fieldsVisible||[]);
@@ -1233,7 +1298,8 @@
           }
         }
 
-        const rows = all.map(r=>{ const flat={...r};
+        const rows = all.map(r=>{
+          const flat={...r};
           if(Array.isArray(flat.meds)){
             flat.meds = flat.meds.map(m=>`${m.name} ${m.dose}${m.units?(' '+m.units):''}`).join('; ');
           }
@@ -1275,13 +1341,21 @@
           for(const r of rows){
             let rowH=rowBaseH;
             const wrapped=cols.map(col=>{
-              let v=r[col]; if(v==null) v=''; v=String(v);
+              let v=r[col]; if(v==null) v='';
+              v=String(v);
               const lines=doc.splitTextToSize(v, colW - cellPadX*2);
-              const h=lines.length*12 + cellPadY*2; if(h>rowH) rowH=h; return lines;
+              const h=lines.length*12 + cellPadY*2;
+              if(h>rowH) rowH=h;
+              return lines;
             });
             if(y+rowH>bottomLimit){ doc.addPage(); y=margin; }
+
             let xCell=margin;
-            for(let i=0;i<cols.length;i++){ let lineY=y+10; for(const ln of wrapped[i]){ doc.text(ln, xCell+cellPadX, lineY); lineY+=12; } xCell+=colW; }
+            for(let i=0;i<cols.length;i++){
+              let lineY=y+10;
+              for(const ln of wrapped[i]){ doc.text(ln, xCell+cellPadX, lineY); lineY+=12; }
+              xCell+=colW;
+            }
             y+=rowH;
           }
           y+=10;
@@ -1372,8 +1446,7 @@
     let targets = [];
     if (mode === 'all') targets = [...State.entries];
     else {
-      const inRange = (dateStr) => { if (!dateStr) return false; const d = new Date(dateStr);
-        if (rmStart && d < new Date(rmStart)) return false; if (rmEnd && d > new Date(rmEnd)) return false; return true; };
+      const inRange = (dateStr) => U.dateInRange(dateStr, rmStart, rmEnd);
       targets = State.entries.filter(e => inRange(e.date));
     }
     if (!targets.length) { alert('No entries match the selected criteria.'); return; }
