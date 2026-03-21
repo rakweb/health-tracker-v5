@@ -1,0 +1,45 @@
+name: Auto Version & SW Cache Bump
+
+on:
+  push:
+    branches:
+      - main   # change if you deploy from a different branch
+
+permissions:
+  contents: write   # required to commit version.json and sw.js
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate version.json and bump Service Worker cache
+        run: |
+          node scripts/auto-version.mjs --sw ./sw.js
+
+      - name: Commit and push changes (if any)
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add version.json sw.js || true
+
+          if ! git diff --cached --quiet; then
+            VERSION=$(jq -r .version version.json)
+            BUILD=$(jq -r .build version.json)
+
+            git commit -m "chore: release ${VERSION}-${BUILD}"
+            git push
+          else
+            echo "No version or cache changes to commit."
+          fi
