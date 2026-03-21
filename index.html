@@ -118,6 +118,45 @@
 
     /* Full-width sections (Entries + Chart stacked vertically) */
     .full-width { width: 100%; margin-top: 12px; }
+
+    /* ===== Range slider base styling (Pain/Symptoms) ===== */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      outline: none;
+      background: linear-gradient(90deg, #22c55e 0%, #f59e0b 50%, #ef4444 100%); /* JS will overwrite */
+      transition: background 120ms linear, box-shadow 120ms linear;
+      border: 1px solid #1f2a45;
+      box-shadow: inset 0 0 0 1px rgba(53, 80, 127, 0.15);
+    }
+    input[type="range"]:focus { box-shadow: 0 0 0 3px rgba(75, 163, 255, 0.12); }
+
+    /* Thumb - WebKit */
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--thumb-color, #e2e8f0);
+      border: 1px solid #0b1220;
+      box-shadow: 0 1px 0 rgba(0,0,0,.2);
+      cursor: pointer; transition: background 120ms linear, transform 120ms ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.06); }
+
+    /* Thumb - Firefox */
+    input[type="range"]::-moz-range-thumb {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--thumb-color, #e2e8f0);
+      border: 1px solid #0b1220;
+      box-shadow: 0 1px 0 rgba(0,0,0,.2);
+      cursor: pointer; transition: background 120ms linear, transform 120ms ease;
+    }
+    input[type="range"]::-moz-range-thumb:hover { transform: scale(1.06); }
+    input[type="range"]::-moz-range-track {
+      height: 10px; border-radius: 999px; background: #0c1426; border: 1px solid #1f2a45;
+    }
   </style>
 </head>
 <body>
@@ -186,10 +225,10 @@
 
     <!-- KPIs -->
     <div class="kpis">
-      <div class="kpi"><div class="label">Latest FB Glucose (mg/dL)</div><div class="value" id="kpiGlucose">—</div><div class="trend" id="kpiGlucoseTrend"></div></div>
-      <div class="kpi"><div class="label">Latest BP (Sys/Dia)</div><div class="value" id="kpiBP">—</div><div class="trend" id="kpiBPTrend"></div></div>
-      <div class="kpi"><div class="label">Latest BMI / WHtR</div><div class="value"><span id="kpiBMI">—</span> <span class="small">/</span> <span id="kpiWHtR">—</span></div><div class="trend" id="kpiBMITrend"></div></div>
-      <div class="kpi"><div class="label">Latest SpO₂ / HR</div><div class="value"><span id="kpiSpO2">—</span> <span class="small">/</span> <span id="kpiHR">—</span></div><div class="trend" id="kpiVitalsTrend"></div></div>
+      <div class="kpi"><div class="label">Latest Glucose (mg/dL)</div><div class="value" id="kpiGlucose">—</div><div class="trend" id="kpiGlucoseTrend"></div></div>
+      <div class="kpi"><div class="label">BP (Sys/Dia)</div><div class="value" id="kpiBP">—</div><div class="trend" id="kpiBPTrend"></div></div>
+      <div class="kpi"><div class="label">BMI / WHtR</div><div class="value"><span id="kpiBMI">—</span> <span class="small">/</span> <span id="kpiWHtR">—</span></div><div class="trend" id="kpiBMITrend"></div></div>
+      <div class="kpi"><div class="label">SpO₂ / HR</div><div class="value"><span id="kpiSpO2">—</span> <span class="small">/</span> <span id="kpiHR">—</span></div><div class="trend" id="kpiVitalsTrend"></div></div>
     </div>
 
     <!-- Risk alerts -->
@@ -243,7 +282,7 @@
       <div class="row">
         <div><label>Date</label><input type="date" id="f_date"></div>
         <div><label>Time</label><input type="time" id="f_time"></div>
-        <div><label>FB Glucose (mg/dL)</label><input type="number" id="f_glucose" inputmode="decimal"></div>
+        <div><label>Glucose (mg/dL)</label><input type="number" id="f_glucose" inputmode="decimal"></div>
         <div><label>Body Battery (0-100)</label><input type="number" id="f_bodyBattery" min="0" max="100"></div>
         <div><label>Stress (0-100)</label><input type="number" id="f_stress" min="0" max="100"></div>
         <div><label>Weight (lbs)</label><input type="number" id="f_weightLbs" inputmode="decimal"></div>
@@ -258,25 +297,34 @@
         <div><label>Respiration (br/min)</label><input type="number" id="f_resp" inputmode="numeric"></div>
         <div><label>Sleep (hrs)</label><input type="number" id="f_sleep" step="0.1"></div>
         <div><label>Steps</label><input type="number" id="f_steps"></div>
-        <div><label>Pain (0-10)</label><input type="range" id="f_pain" min="0" max="10" value="0" oninput="document.getElementById('painVal').textContent=this.value">
+
+        <div>
+          <label>Pain (0-10)</label>
+          <input type="range" id="f_pain" min="0" max="10" value="0"
+                 oninput="document.getElementById('painVal').textContent=this.value">
           <div class="small">Level: <b id="painVal">0</b></div>
         </div>
-		<div><label>Symptoms (0-10)</label><input type="range" id="f_symptoms" min="0" max="10" value="0" oninput="document.getElementById('symptomsVal').textContent=this.value">
+
+        <!-- New: Symptoms slider (0–10) with color feedback -->
+        <div>
+          <label>Symptoms (0-10)</label>
+          <input type="range" id="f_symptoms" min="0" max="10" value="0">
           <div class="small">Level: <b id="symptomsVal">0</b></div>
         </div>
+
         <div>
           <label>Emotions</label>
           <select id="f_emotions">
             <option value="">—</option>
             <option>Happy</option><option>Calm</option><option>Neutral</option>
-            <option>Anxious</option><option>Sad</option><option>Stressed</option><option>Fatigued</option><option>Mad</option>
+            <option>Anxious</option><option>Sad</option><option>Stressed</option><option>Fatigued</option>
           </select>
         </div>
         <div style="grid-column:1/-1">
           <label>Medicines (name dose units; add multiple)</label>
           <div class="row">
-            <input id="med_name" placeholder="Name (e.g., Tylenol)" />
-            <input id="med_dose" placeholder="Dose (e.g., 6)" />
+            <input id="med_name" placeholder="Name (e.g., Furosemide)" />
+            <input id="med_dose" placeholder="Dose (e.g., 20)" />
             <input id="med_units" placeholder="Units (mg, ml, tabs)" />
             <button class="btn" id="btnAddMed" type="button">Add</button>
           </div>
@@ -507,26 +555,26 @@
 
   /* ==================== App data & defaults ==================== */
   const METRICS = [
-    { key:'glucose',     label:'Glucose (mg/dL)',   unit:'mg/dL', type:'number'},
-    { key:'bodyBattery', label:'Body Battery',      unit:'',      type:'number'},
-    { key:'stress',      label:'Stress',            unit:'',      type:'number'},
-    { key:'weightLbs',   label:'Weight (lbs)',      unit:'lbs',   type:'number'},
-    { key:'heightIn',    label:'Height (in)',       unit:'in',    type:'number'},
-    { key:'waistIn',     label:'Waist (in)',        unit:'in',    type:'number'},
-    { key:'tempF',       label:'Temperature (°F)',  unit:'°F',    type:'number'},
-    { key:'lungFluidCc', label:'Lung Fluid (cc)',   unit:'cc',    type:'number'},
-    { key:'sys',         label:'Systolic (mmHg)',   unit:'mmHg',  type:'number'},
-    { key:'dia',         label:'Diastolic (mmHg)',  unit:'mmHg',  type:'number'},
-    { key:'spo2',        label:'SpO₂ (%)',          unit:'%',     type:'number'},
-    { key:'hr',          label:'Heart Rate (bpm)',  unit:'bpm',   type:'number'},
-    { key:'resp',        label:'Respiration (br/min)', unit:'/min', type:'number'},
-    { key:'sleep',       label:'Sleep (hrs)',       unit:'hrs',   type:'number'},
-    { key:'steps',       label:'Steps',             unit:'',      type:'number'},
-    { key:'pain',        label:'Pain (0-10)',       unit:'',      type:'number'},
-	{ key:'symptoms',    label:'Symptoms (0-10)',   unit:'',      type:'number'},
-    { key:'emotions',    label:'Emotions',          unit:'',      type:'text'},
-    { key:'comments',    label:'Comments',          unit:'',      type:'text'},
-    { key:'meds',        label:'Medicines',         unit:'',      type:'list'},
+    { key:'glucose',     label:'Glucose (mg/dL)',          unit:'mg/dL', type:'number'},
+    { key:'bodyBattery', label:'Body Battery',             unit:'',      type:'number'},
+    { key:'stress',      label:'Stress',                   unit:'',      type:'number'},
+    { key:'weightLbs',   label:'Weight (lbs)',             unit:'lbs',   type:'number'},
+    { key:'heightIn',    label:'Height (in)',              unit:'in',    type:'number'},
+    { key:'waistIn',     label:'Waist (in)',               unit:'in',    type:'number'},
+    { key:'tempF',       label:'Temperature (°F)',         unit:'°F',    type:'number'},
+    { key:'lungFluidCc', label:'Lung Fluid (cc)',          unit:'cc',    type:'number'},
+    { key:'sys',         label:'Systolic (mmHg)',          unit:'mmHg',  type:'number'},
+    { key:'dia',         label:'Diastolic (mmHg)',         unit:'mmHg',  type:'number'},
+    { key:'spo2',        label:'SpO₂ (%)',                 unit:'%',     type:'number'},
+    { key:'hr',          label:'Heart Rate (bpm)',         unit:'bpm',   type:'number'},
+    { key:'resp',        label:'Respiration (br/min)',     unit:'/min',  type:'number'},
+    { key:'sleep',       label:'Sleep (hrs)',              unit:'hrs',   type:'number'},
+    { key:'steps',       label:'Steps',                    unit:'',      type:'number'},
+    { key:'pain',        label:'Pain (0-10)',              unit:'',      type:'number'},
+    { key:'symptoms',    label:'Symptoms (0-10)',          unit:'',      type:'number'},  <!-- NEW -->
+    { key:'emotions',    label:'Emotions',                 unit:'',      type:'text'},
+    { key:'comments',    label:'Comments',                 unit:'',      type:'text'},
+    { key:'meds',        label:'Medicines',                unit:'',      type:'list'},
   ];
   const CORE_FIELDS = ['date','time', ...METRICS.map(m=>m.key)];
   const DEFAULT_FIELDS_VISIBLE = [
@@ -547,7 +595,7 @@
     sleep:{warnLow:4,bandLow:7,bandHigh:9,warnHigh:14},
     steps:{warnLow:0,bandLow:5000,bandHigh:10000,warnHigh:20000},
     pain:{warnLow:0,bandLow:0,bandHigh:3,warnHigh:7},
-	stmptoms:{warnLow:0,bandLow:0,bandHigh:3,warnHigh:7},
+    symptoms:{warnLow:0,bandLow:0,bandHigh:3,warnHigh:7},  // NEW: simple default like PAIN
     bmi:{warnLow:18.5,bandLow:18.5,bandHigh:24.9,warnHigh:30},
     whtr:{warnLow:0.34,bandLow:0.34,bandHigh:0.49,warnHigh:0.6},
   };
@@ -712,8 +760,6 @@
         for(const k of vis){
           const td=document.createElement('td');
           if (k==='date') {
-            // Display ISO date; or use locale if preferred:
-            // const dt = U.parseDateTime(en.date, en.time); td.textContent = dt ? dt.toLocaleDateString() : (en.date||'');
             td.textContent = en.date || '';
           } else if (k==='time') {
             td.textContent = en.time || '';
@@ -766,7 +812,7 @@
       assess('glucose',latest.glucose,'Glucose'); assess('sys',latest.sys,'Systolic'); assess('dia',latest.dia,'Diastolic');
       assess('spo2',latest.spo2,'SpO₂'); assess('tempF',latest.tempF,'Temp'); assess('hr',latest.hr,'HR'); assess('resp',latest.resp,'Resp');
       assess('stress',latest.stress,'Stress'); assess('bodyBattery',latest.bodyBattery,'Body Battery'); assess('lungFluidCc',latest.lungFluidCc,'Lung Fluid');
-      assess('sleep',latest.sleep,'Sleep'); assess('steps',latest.steps,'Steps'); assess('pain',latest.pain,'Pain');
+      assess('sleep',latest.sleep,'Sleep'); assess('steps',latest.steps,'Steps'); assess('pain',latest.pain,'Pain'); assess('symptoms',latest.symptoms,'Symptoms');
       const bmi=U.bmi(latest.weightLbs,latest.heightIn); if(bmi!=null) assess('bmi',bmi,'BMI');
       const whtr=U.whtr(latest.waistIn,latest.heightIn); if(whtr!=null) assess('whtr',whtr,'WHtR');
     },
@@ -860,7 +906,7 @@
         map('f_tempF',en.tempF); map('f_lungFluidCc',en.lungFluidCc); map('f_sys',en.sys); map('f_dia',en.dia);
         map('f_spo2',en.spo2); map('f_hr',en.hr); map('f_resp',en.resp); map('f_sleep',en.sleep); map('f_steps',en.steps);
         map('f_pain',en.pain??0); document.getElementById('painVal').textContent=en.pain??0;
-		map('f_symptoms',en.symptoms??0); document.getElementById('symptomsVal').textContent=en.symptoms??0;
+        const sym = (en.symptoms??0); const sEl = document.getElementById('f_symptoms'); if (sEl) sEl.value = sym; const sLab=document.getElementById('symptomsVal'); if (sLab) sLab.textContent = String(sym);
         document.getElementById('f_emotions').value=en.emotions||''; document.getElementById('f_comments').value=en.comments||'';
         State.medsBuffer = Array.isArray(en.meds)? JSON.parse(JSON.stringify(en.meds)) : [];
       } else {
@@ -870,8 +916,13 @@
           const el=document.getElementById('f_'+k); if(el) el.value='';
         });
         document.getElementById('f_pain').value=0; document.getElementById('painVal').textContent='0';
+        const sEl = document.getElementById('f_symptoms'); if (sEl) sEl.value=0; const sLab=document.getElementById('symptomsVal'); if (sLab) sLab.textContent='0';
         document.getElementById('f_emotions').value=''; document.getElementById('f_comments').value='';
       }
+      // Repaint sliders to match values
+      paintRange(document.getElementById('f_pain'));
+      const sEl2 = document.getElementById('f_symptoms'); if (sEl2) paintRange(sEl2);
+
       UI.renderMedsBuffer();
     },
     closeEntry(){ document.getElementById('entryModal')?.classList.remove('show'); },
@@ -898,7 +949,7 @@
       const host=document.getElementById('thEditor'); if(!host) return;
       host.innerHTML='';
 
-      const keys=['glucose','sys','dia','spo2','hr','tempF','stress','bodyBattery','lungFluidCc','resp','sleep','steps','pain','bmi','whtr'];
+      const keys=['glucose','sys','dia','spo2','hr','tempF','stress','bodyBattery','lungFluidCc','resp','sleep','steps','pain','symptoms','bmi','whtr'];
 
       let html='';
       for (const k of keys) {
@@ -937,7 +988,9 @@
       const e=document.getElementById('rm_end');   if (e) e.value='';
       document.getElementById('bulkRemoveModal')?.classList.add('show');
     },
-    closeBulkRemove(){ document.getElementById('bulkRemoveModal')?.classList.remove('show'); },
+    closeBulkRemove(){
+      document.getElementById('bulkRemoveModal')?.classList.remove('show');
+    },
 
     renderMedsBuffer(){
       const host=document.getElementById('medList'); if(!host) return; host.innerHTML='';
@@ -1020,6 +1073,7 @@
       'respiration(br/min)':'resp','respiration':'resp','resp':'resp',
       'sleep(hrs)':'sleep','sleephrs':'sleep','sleep':'sleep',
       'steps':'steps','pain(0-10)':'pain','pain':'pain',
+      'symptoms(0-10)':'symptoms','symptoms':'symptoms',    // NEW mapping
       'emotions':'emotions','mood':'emotions','comments':'comments','notes':'comments',
       'medicines':'meds','meds':'meds'
     };
@@ -1032,7 +1086,7 @@
       weightLbs:null, heightIn:null, waistIn:null,
       tempF:null, lungFluidCc:null, sys:null, dia:null,
       spo2:null, hr:null, resp:null, sleep:null, steps:null,
-      pain:null, emotions:'', comments:'', meds:[]
+      pain:null, symptoms:null, emotions:'', comments:'', meds:[]
     };
 
     const dtIdx = headerIndex['datetime'];
@@ -1057,7 +1111,7 @@
 
     if (!e.date) return null;
 
-    const numericKeys = ['glucose','bodyBattery','stress','weightLbs','heightIn','waistIn','tempF','lungFluidCc','sys','dia','spo2','hr','resp','sleep','steps','pain'];
+    const numericKeys = ['glucose','bodyBattery','stress','weightLbs','heightIn','waistIn','tempF','lungFluidCc','sys','dia','spo2','hr','resp','sleep','steps','pain','symptoms'];
     for (const k of numericKeys) {
       const idx = headerIndex[k];
       if (idx != null) {
@@ -1081,6 +1135,39 @@
     return e;
   }
 
+  /* ==================== Colorizing sliders (Pain & Symptoms) ==================== */
+  function valueToHue(value, min, max) {
+    const v = Math.min(Math.max(value, min), max);
+    const t = (v - min) / (max - min || 1);
+    return 120 * (1 - t); // 120 (green) -> 0 (red)
+  }
+  function sliderColor(value, min, max) {
+    const hue = valueToHue(value, min, max);
+    return `hsl(${hue} 85% 55%)`;
+  }
+  function paintRange(el) {
+    if (!el) return;
+    const min = Number(el.min ?? 0);
+    const max = Number(el.max ?? 100);
+    const val = Number(el.value ?? min);
+    const pct = ((val - min) / (max - min || 1)) * 100;
+    const col = sliderColor(val, min, max);
+    const base = '#0c1426';
+    el.style.background = `linear-gradient(90deg, ${col} ${pct}%, ${base} ${pct}%)`;
+    el.style.setProperty('--thumb-color', col);
+  }
+  function wireRangeColor(id, labelId) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    paintRange(el);
+    if (labelId) { const lab = document.getElementById(labelId); if (lab) lab.textContent = el.value; }
+    el.addEventListener('input', () => {
+      paintRange(el);
+      if (labelId) { const lab = document.getElementById(labelId); if (lab) lab.textContent = el.value; }
+    });
+    el.addEventListener('change', () => paintRange(el));
+  }
+
   /* ==================== Actions ==================== */
   const Actions = {
     async init(){
@@ -1102,6 +1189,10 @@
 
       State.entries=await DB.getAllEntries();
       UI.initChartMetricSelector(); UI.buildTable(); UI.refreshKPIs(); UI.refreshChart();
+
+      // Wire slider colors once DOM ready:
+      wireRangeColor('f_pain', 'painVal');
+      wireRangeColor('f_symptoms', 'symptomsVal');
     },
 
     async saveEntryFromForm(){
@@ -1132,6 +1223,7 @@
         sleep: num('f_sleep'),
         steps: num('f_steps'),
         pain: num('f_pain'),
+        symptoms: num('f_symptoms'),   // NEW: store symptoms 0–10
         emotions: document.getElementById('f_emotions').value || '',
         comments: document.getElementById('f_comments').value || '',
         meds: JSON.parse(JSON.stringify(State.medsBuffer)),
@@ -1152,7 +1244,7 @@
       try {
         const existing = State.thresholds || {};
         const merged = { ...existing };
-        const editKeys = ['glucose','sys','dia','spo2','hr','tempF','stress','bodyBattery','lungFluidCc','resp','sleep','steps','pain','bmi','whtr'];
+        const editKeys = ['glucose','sys','dia','spo2','hr','tempF','stress','bodyBattery','lungFluidCc','resp','sleep','steps','pain','symptoms','bmi','whtr'];
 
         const getNum = (id) => {
           const el = document.getElementById(id);
@@ -1315,7 +1407,8 @@
           'Temperature (°F)':'Temp','Heart Rate (bpm)':'HR','Respiration (br/min)':'Resp',
           'Body Battery':'BodyBat','SpO₂ (%)':'SpO2','Lung Fluid (cc)':'LungFl',
           'Weight (lbs)':'Wt','Height (in)':'Ht','Waist (in)':'Waist',
-          'Sleep (hrs)':'Sleep','Medicines':'Meds','Emotions':'Mood','Comments':'Notes'
+          'Sleep (hrs)':'Sleep','Medicines':'Meds','Emotions':'Mood','Comments':'Notes',
+          'Symptoms (0-10)':'Symptoms'
         };
         const labelOf=(k)=> (k==='date'?'Date':(k==='time'?'Time':(METRICS.find(x=>x.key===k)?.label||k.toUpperCase())));
         function shortLabel(label, colW){
@@ -1487,7 +1580,7 @@
     });
   }
 
-  // Defer init until window 'load' so deferred libs are ready (Chart/jsPDF) and SW can register safely
+  // Defer init until window 'load'
   window.addEventListener('load', async () => { registerSW(); bindSaveThresholds(); await Actions.init(); });
   </script>
 </body>
