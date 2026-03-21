@@ -186,10 +186,10 @@
 
     <!-- KPIs -->
     <div class="kpis">
-      <div class="kpi"><div class="label">Latest Glucose (mg/dL)</div><div class="value" id="kpiGlucose">—</div><div class="trend" id="kpiGlucoseTrend"></div></div>
-      <div class="kpi"><div class="label">BP (Sys/Dia)</div><div class="value" id="kpiBP">—</div><div class="trend" id="kpiBPTrend"></div></div>
-      <div class="kpi"><div class="label">BMI / WHtR</div><div class="value"><span id="kpiBMI">—</span> <span class="small">/</span> <span id="kpiWHtR">—</span></div><div class="trend" id="kpiBMITrend"></div></div>
-      <div class="kpi"><div class="label">SpO₂ / HR</div><div class="value"><span id="kpiSpO2">—</span> <span class="small">/</span> <span id="kpiHR">—</span></div><div class="trend" id="kpiVitalsTrend"></div></div>
+      <div class="kpi"><div class="label">Latest FB Glucose (mg/dL)</div><div class="value" id="kpiGlucose">—</div><div class="trend" id="kpiGlucoseTrend"></div></div>
+      <div class="kpi"><div class="label">Latest BP (Sys/Dia)</div><div class="value" id="kpiBP">—</div><div class="trend" id="kpiBPTrend"></div></div>
+      <div class="kpi"><div class="label">Latest BMI / WHtR</div><div class="value"><span id="kpiBMI">—</span> <span class="small">/</span> <span id="kpiWHtR">—</span></div><div class="trend" id="kpiBMITrend"></div></div>
+      <div class="kpi"><div class="label">Latest SpO₂ / HR</div><div class="value"><span id="kpiSpO2">—</span> <span class="small">/</span> <span id="kpiHR">—</span></div><div class="trend" id="kpiVitalsTrend"></div></div>
     </div>
 
     <!-- Risk alerts -->
@@ -243,7 +243,7 @@
       <div class="row">
         <div><label>Date</label><input type="date" id="f_date"></div>
         <div><label>Time</label><input type="time" id="f_time"></div>
-        <div><label>Glucose (mg/dL)</label><input type="number" id="f_glucose" inputmode="decimal"></div>
+        <div><label>BF Glucose (mg/dL)</label><input type="number" id="f_glucose" inputmode="decimal"></div>
         <div><label>Body Battery (0-100)</label><input type="number" id="f_bodyBattery" min="0" max="100"></div>
         <div><label>Stress (0-100)</label><input type="number" id="f_stress" min="0" max="100"></div>
         <div><label>Weight (lbs)</label><input type="number" id="f_weightLbs" inputmode="decimal"></div>
@@ -258,10 +258,11 @@
         <div><label>Respiration (br/min)</label><input type="number" id="f_resp" inputmode="numeric"></div>
         <div><label>Sleep (hrs)</label><input type="number" id="f_sleep" step="0.1"></div>
         <div><label>Steps</label><input type="number" id="f_steps"></div>
-        <div>
-          <label>Pain (0-10)</label>
-          <input type="range" id="f_pain" min="0" max="10" value="0" oninput="document.getElementById('painVal').textContent=this.value">
+        <div><label>Pain (0-10)</label><input type="range" id="f_pain" min="0" max="10" value="0" oninput="document.getElementById('painVal').textContent=this.value">
           <div class="small">Level: <b id="painVal">0</b></div>
+        </div>
+		<div><label>Symptoms (0-10)</label><input type="range" id="f_symptoms" min="0" max="10" value="0" oninput="document.getElementById('SymptomsVal').textContent=this.value">
+          <div class="small">Level: <b id="symptomsVal">0</b></div>
         </div>
         <div>
           <label>Emotions</label>
@@ -274,8 +275,8 @@
         <div style="grid-column:1/-1">
           <label>Medicines (name dose units; add multiple)</label>
           <div class="row">
-            <input id="med_name" placeholder="Name (e.g., Furosemide)" />
-            <input id="med_dose" placeholder="Dose (e.g., 20)" />
+            <input id="med_name" placeholder="Name (e.g., Tylenol)" />
+            <input id="med_dose" placeholder="Dose (e.g., 6)" />
             <input id="med_units" placeholder="Units (mg, ml, tabs)" />
             <button class="btn" id="btnAddMed" type="button">Add</button>
           </div>
@@ -522,13 +523,14 @@
     { key:'sleep',       label:'Sleep (hrs)',       unit:'hrs',   type:'number'},
     { key:'steps',       label:'Steps',             unit:'',      type:'number'},
     { key:'pain',        label:'Pain (0-10)',       unit:'',      type:'number'},
+	{ key:'symptoms',    label:'Symptoms (0-10)',   unit:'',      type:'number'},
     { key:'emotions',    label:'Emotions',          unit:'',      type:'text'},
     { key:'comments',    label:'Comments',          unit:'',      type:'text'},
     { key:'meds',        label:'Medicines',         unit:'',      type:'list'},
   ];
   const CORE_FIELDS = ['date','time', ...METRICS.map(m=>m.key)];
   const DEFAULT_FIELDS_VISIBLE = [
-    'date','time','glucose','sys','dia','spo2','hr','weightLbs','heightIn','waistIn','sleep','steps','pain','emotions','comments'
+    'date','time','glucose','sys','dia','spo2','hr','weightLbs','heightIn','waistIn','sleep','steps','pain','symptoms','emotions','comments'
   ];
   const DEFAULT_THRESHOLDS = {
     glucose:{warnLow:70,bandLow:80,bandHigh:140,warnHigh:180},
@@ -545,6 +547,7 @@
     sleep:{warnLow:4,bandLow:7,bandHigh:9,warnHigh:14},
     steps:{warnLow:0,bandLow:5000,bandHigh:10000,warnHigh:20000},
     pain:{warnLow:0,bandLow:0,bandHigh:3,warnHigh:7},
+	stmptoms:{warnLow:0,bandLow:0,bandHigh:3,warnHigh:7},
     bmi:{warnLow:18.5,bandLow:18.5,bandHigh:24.9,warnHigh:30},
     whtr:{warnLow:0.34,bandLow:0.34,bandHigh:0.49,warnHigh:0.6},
   };
@@ -857,6 +860,7 @@
         map('f_tempF',en.tempF); map('f_lungFluidCc',en.lungFluidCc); map('f_sys',en.sys); map('f_dia',en.dia);
         map('f_spo2',en.spo2); map('f_hr',en.hr); map('f_resp',en.resp); map('f_sleep',en.sleep); map('f_steps',en.steps);
         map('f_pain',en.pain??0); document.getElementById('painVal').textContent=en.pain??0;
+		map('f_symptoms',en.symptoms??0); document.getElementById('symptomsVal').textContent=en.symptoms??0;
         document.getElementById('f_emotions').value=en.emotions||''; document.getElementById('f_comments').value=en.comments||'';
         State.medsBuffer = Array.isArray(en.meds)? JSON.parse(JSON.stringify(en.meds)) : [];
       } else {
