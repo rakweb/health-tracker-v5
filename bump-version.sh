@@ -207,3 +207,65 @@ else
 fi
 
 echo "✅ Done. New version: $NEW_VERSION"
+
+# ... keep the script as-is above this point ...
+
+# Generate changelog entry (simple): commits since last tag
+generate_changelog () {
+  local range="$1" newv="$2"
+  local date
+  date="$(date +%Y-%m-%d)"
+  {
+    echo "## $newv - $date"
+    if [[ -z "$range" ]]; then
+      git log --pretty="* %s"
+    else
+      git log --pretty="* %s" "$range"
+    fi
+    echo
+  }
+}
+
+if [[ "$DRY_RUN" != "yes" ]]; then
+  ENTRY="$(generate_changelog "$RANGE" "$NEW_VERSION")"
+
+  # --- NEW: also save the latest entry as a standalone release notes file
+  echo "$ENTRY" > .release-notes.md   # <--- NEW
+
+  if [[ -f CHANGELOG.md ]]; then
+    printf "%s\n\n%s" "$ENTRY" "$(cat CHANGELOG.md)" > CHANGELOG.md.tmp && mv CHANGELOG.md.tmp CHANGELOG.md
+  else
+    printf "# Changelog\n\n%s" "$ENTRY" > CHANGELOG.md
+  fi
+fi
+
+# Commit, tag, push
+if [[ "$DRY_RUN" != "yes" ]]; then
+  git add -A
+  git commit -m "chore(release): v$NEW_VERSION"
+  git tag -a "v$NEW_VERSION" -m "Release $NEW_VERSION"
+
+  if [[ "$PUSH" == "yes" ]]; then
+    git push && git push --tags
+  else
+    echo "ℹ️  Skipped push (--no-push)."
+  fi
+else
+  echo "DRY RUN would:"
+  echo "- Update version files to $NEW_VERSION"
+  echo "- Prepend changelog section"
+  echo "- Commit & tag v$NEW_VERSION"
+  [[ "$PUSH" == "yes" ]] && echo "- Push to origin"
+fi
+
+# --- NEW: if running in GitHub Actions, publish outputs for downstream steps
+if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+  {
+    echo "new_version=$NEW_VERSION"
+    echo "tag=v$NEW_VERSION"
+    echo "release_notes=.release-notes.md"
+  } >> "$GITHUB_OUTPUT"
+fi
+# --- END NEW
+
+echo "✅ Done. New version: $NEW_VERSION"
