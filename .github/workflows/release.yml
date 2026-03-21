@@ -1,0 +1,31 @@
+name: Release
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write   # needed to push tags and commits
+
+jobs:
+  version_tag_release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # ensure tags & full history are available
+
+      - name: Set up git identity (CI)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Make script executable
+        run: chmod +x ./bump-version.sh
+
+      - name: Bump version and tag (auto)
+        env:
+          # If you use PAT or GITHUB_TOKEN, checkout@v4 already configures origin with token
+          GIT_TRACE: 1
+        run: ./bump-version.sh auto
