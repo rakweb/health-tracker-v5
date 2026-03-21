@@ -5,7 +5,7 @@ on:
     branches: [ main ]
 
 permissions:
-  contents: write   # needed to push tags and commits
+  contents: write   # needed to commit, tag, and create releases
 
 jobs:
   version_tag_release:
@@ -25,7 +25,27 @@ jobs:
         run: chmod +x ./bump-version.sh
 
       - name: Bump version and tag (auto)
+        id: bump
         env:
-          # If you use PAT or GITHUB_TOKEN, checkout@v4 already configures origin with token
           GIT_TRACE: 1
         run: ./bump-version.sh auto
+
+      # (Optional) Build your project/artifacts here, e.g.:
+      # - name: Build
+      #   run: |
+      #     npm ci && npm run build
+      #   # save outputs under dist/ or build/ to upload as release assets
+
+      - name: Create GitHub Release
+        if: ${{ steps.bump.outputs.new_version != '' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.bump.outputs.new_version }}
+          name: v${{ steps.bump.outputs.new_version }}
+          body_path: .release-notes.md     # notes created by the script
+          # generate_release_notes: true    # (alternative) let GitHub auto-generate
+          draft: false
+          prerelease: false
+          files: |
+            dist/**
+            build/**
